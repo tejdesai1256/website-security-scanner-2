@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from scanners.headers_scanner import scan_headers
 from scanners.ssl_scanner import scan_ssl
 from scanners.port_scanner import scan_ports
+from scanners.dns_scanner import scan_dns
 
 from services.scoring_service import calculate_score
 from scanners.seo_scanner import scan_seo
@@ -44,6 +45,8 @@ def scan_website(data: ScanRequest):
 
     seo_result = scan_seo(data.url)
 
+    dns_result = scan_dns(data.url)
+
     performance_result = scan_performance(data.url)
 
     score_result = calculate_score(
@@ -51,34 +54,24 @@ def scan_website(data: ScanRequest):
         ssl_result,
         ports_result,
         seo_result,
-        performance_result
+        performance_result,
+        dns_result
     )
 
     return {
-
-    "website": data.url,
-
-    "summary": {
-        "security_score":
-            score_result["security_score"],
-
-        "risk_level":
-            score_result["risk_level"],
-
-        "recommendations":
-            score_result["recommendations"]
-    },
-
-    "scans": {
-
-        "ssl": ssl_result,
-
-        "headers": headers_result,
-
-        "ports": ports_result,
-
-        "seo": seo_result,
-
-        "performance": performance_result
+        "success": True,
+        "website": data.url,
+        "summary": {
+            "security_score": score_result["security_score"],
+            "risk_level": score_result["risk_level"],
+            "recommendations": score_result["recommendations"]
+        },
+        "scans": {
+            "ssl": ssl_result,
+            "headers": headers_result,
+            "ports": ports_result,
+            "seo": seo_result,
+            "dns": dns_result,
+            "performance": performance_result
+        }
     }
-}

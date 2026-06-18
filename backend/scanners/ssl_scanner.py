@@ -6,6 +6,9 @@ from datetime import datetime
 def scan_ssl(url):
 
     try:
+        if not url.startswith(("http://", "https://")):
+            url = "https://" + url
+            
         hostname = urlparse(url).hostname
 
         context = ssl.create_default_context()
@@ -34,5 +37,6 @@ def scan_ssl(url):
 
         return {
             "success": False,
+            "ssl_enabled": False,
             "error": str(e)
         }

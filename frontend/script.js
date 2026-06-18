@@ -40,9 +40,13 @@ async function scanWebsite() {
         scanBtn.disabled = true;
 
         // Backend API
+        const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:8000/scan'
+            : `${window.location.origin}/api/scan`;
+        
         const response =
             await fetch(
-                'https://website-security-scanner-4.onrender.com/scan',
+                apiUrl,
                 {
                     method: 'POST',
 
@@ -57,8 +61,13 @@ async function scanWebsite() {
                 }
             );
 
-        data = await response.json();
+if (!response.ok) {
+    throw new Error(`Backend Error: ${response.status}`);
+}
 
+data = await response.json();
+
+console.log("API Response:", data);
         console.log(data);
 
         // Show results
@@ -202,7 +211,35 @@ async function scanWebsite() {
         ).textContent =
             data.scans.performance.speed_index;
 
-        
+
+        // =========================
+// DNS INFORMATION
+// =========================
+
+document.getElementById("dnsIp").textContent =
+    data.scans?.dns?.ip_address || "-";
+
+document.getElementById("dnsA").textContent =
+    (data.scans?.dns?.A?.length)
+        ? data.scans.dns.A.join(", ")
+        : "None";
+
+document.getElementById("dnsMX").textContent =
+    (data.scans?.dns?.MX?.length)
+        ? data.scans.dns.MX.join(", ")
+        : "None";
+
+document.getElementById("dnsNS").textContent =
+    (data.scans?.dns?.NS?.length)
+        ? data.scans.dns.NS.join(", ")
+        : "None";
+
+document.getElementById("dnsTXT").textContent =
+    (data.scans?.dns?.TXT?.length)
+        ? data.scans.dns.TXT.slice(0, 3).join(", ")
+        : "None";
+
+
         // =========================
         // SEO
         // =========================
@@ -345,7 +382,7 @@ function backToScanner() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// Download Report (PDF)
+// Download Report (TXT)
 function downloadReport() {
     const website = document.getElementById('resultWebsite').textContent;
     const url = document.getElementById('resultUrl').textContent;
@@ -369,21 +406,31 @@ SSL/TLS CERTIFICATE:
 - Expires: ${document.getElementById('sslExpires').textContent || '-'}
 
 PORT SCAN:
-- Open Ports: ${document.getElementById('openPorts').textContent = data?.scans?.ports?.open_ports?.length || 0}
-- Vulnerable: ${document.getElementById('vulnerablePorts').textContent = data?.scans?.ports?.vulnerable_ports?.length || 0}
-- Services: ${document.getElementById('runningServices').textContent = (data?.scans?.ports?.open_ports || []).map(p => p.service).join(', ') || 'None'}
+- Open Ports: ${document.getElementById('openPorts').textContent || '0'}
+- Vulnerable: ${document.getElementById('vulnerablePorts').textContent || '0'}
+- Services: ${document.getElementById('runningServices').textContent || 'None'}
 
-VULNERABILITIES:
-- Critical: ${document.getElementById('criticalVuln').textContent = data?.security?.vulnerabilities?.critical || 0}
-- High: ${document.getElementById('highVuln').textContent = data?.security?.vulnerabilities?.high || 0}
-- Medium: ${document.getElementById('mediumVuln').textContent = data?.security?.vulnerabilities?.medium || 0}
-- Low: ${document.getElementById('lowVuln').textContent = data?.security?.vulnerabilities?.low || 0}
+DNS INFORMATION:
+- IP Address: ${document.getElementById('dnsIp').textContent || '-'}
+- A Records: ${document.getElementById('dnsA').textContent || 'None'}
+- MX Records: ${document.getElementById('dnsMX').textContent || 'None'}
+- NS Records: ${document.getElementById('dnsNS').textContent || 'None'}
+- TXT Records: ${document.getElementById('dnsTXT').textContent || 'None'}
 
 PERFORMANCE:
-- Page Load Time: ${document.getElementById('pageLoadTime').textContent = data?.scans?.performance?.page_load_time || '-'} ms
-- TTFB: ${document.getElementById('ttfb').textContent = data?.scans?.performance?.ttfb || '-'} ms
-- LCP: ${document.getElementById('lcp').textContent = data?.scans?.performance?.lcp || '-'} ms
-- Mobile Friendly: ${document.getElementById('mobileFriendly').textContent = data?.scans?.performance?.mobile_friendly || '-'} %
+- Performance Score: ${document.getElementById('performanceScore').textContent || '-'}
+- First Contentful Paint: ${document.getElementById('fcp').textContent || '-'}
+- Largest Contentful Paint: ${document.getElementById('lcp').textContent || '-'}
+- Speed Index: ${document.getElementById('speedIndex').textContent || '-'}
+
+SEO ANALYSIS:
+- Title: ${document.getElementById('seoTitle').textContent || 'Missing'}
+- Meta Description: ${document.getElementById('seoMetaDescription').textContent || 'Missing'}
+- H1 Count: ${document.getElementById('headingCount').textContent || '0'}
+- Missing Alt Images: ${document.getElementById('missingAlt').textContent || '0'}
+
+RECOMMENDATIONS:
+${Array.from(document.querySelectorAll('#recommendationsList li')).map(li => `- ${li.textContent}`).join('\n') || 'None'}
 
 Generated by JobJockey Security Scanner
 ${new Date().toLocaleString()}
@@ -398,21 +445,6 @@ ${new Date().toLocaleString()}
     document.body.removeChild(element);
 }
 
-document.getElementById("downloadBtn").addEventListener("click", () => {
-
-    const element = document.getElementById("reportContent");
-
-    const options = {
-        margin: 0.5,
-        filename: "security-report.pdf",
-        image: { type: "jpeg", quality: 1 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: "in", format: "a4", orientation: "portrait" }
-    };
-
-    html2pdf().set(options).from(element).save();
-});
-
 // Validate URL
 function isValidUrl(string) {
     try {
@@ -422,19 +454,6 @@ function isValidUrl(string) {
         return false;
     }
 }
-
-// Smooth scrolling for navigation links
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
-        const href = this.getAttribute('href');
-        if (href !== '#' && document.querySelector(href)) {
-            e.preventDefault();
-            document.querySelector(href).scrollIntoView({
-                behavior: 'smooth'
-            });
-        }
-    });
-});
 
 // Add animation on scroll
 const observerOptions = {

@@ -4395,3 +4395,9 @@ body {
         padding: 40px 0;
     }
 }
+
+
+.dns-card .value{
+    word-break: break-word;
+    white-space: normal;
+}
