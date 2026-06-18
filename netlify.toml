@@ -1,0 +1,8 @@
+[build]
+  command = "# no build needed"
+  publish = "frontend"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

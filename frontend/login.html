@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - JobJockey Security Scanner</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <header class="navbar">
+        <div class="container">
+            <div class="nav-brand" onclick="redirectToHome()" style="cursor: pointer;">
+                <i class="fas fa-shield-alt"></i>
+                <span>JobJockey</span>
+            </div>
+            <nav class="nav-menu">
+                <a href="index.html#about">About Us</a>
+                <a href="index.html#features">Features</a>
+                <a href="index.html#pricing">Pricing</a>
+            </nav>
+            <div class="nav-actions">
+                <a href="signup.html" class="signup-btn">Sign Up</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Login Section -->
+    <section class="auth-section">
+        <div class="container">
+            <div class="auth-wrapper">
+                <!-- Auth Card -->
+                <div class="auth-card">
+                    <div class="auth-header">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <h1>Welcome Back</h1>
+                        <p>Log in to your account</p>
+                    </div>
+
+                    <!-- Error Alert -->
+                    <div class="error-alert" id="errorAlert" style="display: none;"></div>
+
+                    <!-- Login Form -->
+                    <form id="loginForm" class="auth-form">
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-envelope"></i>
+                                <input 
+                                    type="email" 
+                                    id="email" 
+                                    name="email" 
+                                    placeholder="Enter your email"
+                                    required
+                                >
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-lock"></i>
+                                <input 
+                                    type="password" 
+                                    id="password" 
+                                    name="password" 
+                                    placeholder="Enter your password"
+                                    required
+                                >
+                                <i class="fas fa-eye toggle-password" onclick="togglePasswordVisibility('password')"></i>
+                            </div>
+                        </div>
+
+                        <div class="form-options">
+                            <label class="remember-me">
+                                <input type="checkbox" id="rememberMe" name="rememberMe">
+                                <span>Remember me</span>
+                            </label>
+                            <a href="#" class="forgot-password">Forgot password?</a>
+                        </div>
+
+                        <button type="submit" class="auth-btn">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </button>
+                    </form>
+
+                    <!-- Demo Credentials Notice -->
+                    <div class="demo-notice">
+                        <p><strong>Demo Credentials:</strong></p>
+                        <p>Email: demo@example.com</p>
+                        <p>Password: Demo@123</p>
+                    </div>
+
+                    <!-- Signup Link -->
+                    <div class="auth-footer">
+                        <p>Don't have an account? <a href="signup.html">Sign up here</a></p>
+                    </div>
+                </div>
+
+                <!-- Side Illustration -->
+                <div class="auth-illustration">
+                    <div class="illustration-content">
+                        <i class="fas fa-shield-alt"></i>
+                        <h2>Secure Login</h2>
+                        <p>Your account is protected with industry-leading security measures</p>
+                        <ul class="features-list">
+                            <li><i class="fas fa-check"></i> End-to-end encryption</li>
+                            <li><i class="fas fa-check"></i> Two-factor authentication ready</li>
+                            <li><i class="fas fa-check"></i> Secure session management</li>
+                            <li><i class="fas fa-check"></i> GDPR compliant</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="auth.js"></script>
+    <script>
+        // Toggle password visibility
+        function togglePasswordVisibility(fieldId) {
+            const field = document.getElementById(fieldId);
+            const icon = event.target;
+            
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                field.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const rememberMe = document.getElementById('rememberMe').checked;
+
+            // Clear previous errors
+            const errorAlert = document.getElementById('errorAlert');
+            errorAlert.style.display = 'none';
+
+            // Perform login
+            const result = auth.login(email, password);
+
+            if (result.success) {
+                if (rememberMe) {
+                    localStorage.setItem('rememberEmail', email);
+                }
+                
+                // Show success message
+                errorAlert.style.display = 'block';
+                errorAlert.className = 'success-alert';
+                errorAlert.innerHTML = `
+                    <i class="fas fa-check-circle"></i>
+                    <span>Login successful! Redirecting to dashboard...</span>
+                `;
+
+                setTimeout(() => {
+                    redirectToDashboard();
+                }, 1500);
+            } else {
+                // Show errors
+                errorAlert.style.display = 'block';
+                errorAlert.className = 'error-alert';
+                errorAlert.innerHTML = result.errors.map(err => `
+                    <div><i class="fas fa-exclamation-circle"></i> ${err}</div>
+                `).join('');
+            }
+        });
+
+        // Load remembered email
+        window.addEventListener('load', function() {
+            const remembered = localStorage.getItem('rememberEmail');
+            if (remembered) {
+                document.getElementById('email').value = remembered;
+                document.getElementById('rememberMe').checked = true;
+            }
+        });
+    </script>
+</body>
+</html>

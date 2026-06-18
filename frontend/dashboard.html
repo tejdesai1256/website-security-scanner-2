@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - JobJockey Security Scanner</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body onload="protectPage() && initDashboard()">
+    <!-- Navigation Header -->
+    <header class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <i class="fas fa-shield-alt"></i>
+                <span>JobJockey</span>
+            </div>
+            <nav class="nav-menu">
+                <a href="#" onclick="viewDashboard()">Dashboard</a>
+                <a href="#" onclick="viewHistory()">Scan History</a>
+                <a href="#" onclick="viewSettings()">Settings</a>
+            </nav>
+            <div class="nav-actions">
+                <div class="user-menu">
+                    <span class="user-email" id="userEmail"></span>
+                    <button class="logout-btn" onclick="handleLogout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Dashboard Content -->
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="dashboard-sidebar">
+            <div class="sidebar-header">
+                <div class="user-profile">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="user-info">
+                        <h3 id="userName"></h3>
+                        <p id="userEmailSidebar"></p>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="#" onclick="viewDashboard()" class="nav-item active" data-section="dashboard">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" onclick="viewHistory()" class="nav-item" data-section="history">
+                    <i class="fas fa-history"></i>
+                    <span>Scan History</span>
+                </a>
+                <a href="#" onclick="viewSettings()" class="nav-item" data-section="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-stats">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <div class="stat-info">
+                        <p class="stat-label">Scans Remaining</p>
+                        <p class="stat-value" id="scansRemaining">0</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <p class="stat-label">Total Scans</p>
+                        <p class="stat-value" id="totalScans">0</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="dashboard-main">
+            <!-- Dashboard Section -->
+            <section id="dashboardSection" class="dashboard-section">
+                <div class="section-header">
+                    <h1>Website Security Scanner</h1>
+                    <p>Scan your website for vulnerabilities and security issues</p>
+                </div>
+
+                <!-- Scanner Card -->
+                <div class="scanner-card">
+                    <div class="scanner-header">
+                        <i class="fas fa-globe"></i>
+                        <h2>New Scan</h2>
+                    </div>
+
+                    <div class="search-box-dashboard">
+                        <i class="fas fa-globe"></i>
+                        <input 
+                            type="url" 
+                            placeholder="Enter website URL (e.g., https://example.com)" 
+                            id="urlInput"
+                        >
+                        <button class="scan-btn" onclick="scanWebsiteDashboard()">
+                            <i class="fas fa-search"></i> Scan Now
+                        </button>
+                    </div>
+
+                    <div class="quick-scan-options">
+                        <label class="scan-option">
+                            <input type="checkbox" id="deepScan" name="deepScan">
+                            <span>Deep Scan (takes longer)</span>
+                        </label>
+                        <label class="scan-option">
+                            <input type="checkbox" id="includePerformance" name="includePerformance" checked>
+                            <span>Include Performance Analysis</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Recent Scans -->
+                <div class="recent-scans-section">
+                    <h2>Recent Scans</h2>
+                    <div class="scans-list" id="recentScansList">
+                        <p class="empty-state">No scans yet. Start by scanning a website above.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Scan Results Section -->
+            <section id="resultsSection" class="dashboard-section" style="display: none;">
+                <div class="section-header">
+                    <button class="back-btn" onclick="backToDashboard()">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </button>
+                    <h1 id="resultWebsite">Scan Results</h1>
+                </div>
+
+                <!-- Security Score Card -->
+                <div class="results-grid">
+                    <div class="score-card-result">
+                        <div class="score-header">
+                            <i class="fas fa-shield-alt"></i>
+                            <h3>SECURITY SCORE</h3>
+                        </div>
+                        <div class="circular-progress">
+                            <svg viewBox="0 0 100 100">
+                                <defs>
+                                    <linearGradient id="gradientStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" style="stop-color:#00d4ff;stop-opacity:1" />
+                                        <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+                                    </linearGradient>
+                                </defs>
+                                <circle cx="50" cy="50" r="45" class="progress-background"></circle>
+                                <circle cx="50" cy="50" r="45" class="progress-circle" id="progressCircle"></circle>
+                            </svg>
+                            <div class="score-value" id="scoreValue">92</div>
+                        </div>
+                        <div class="score-status" id="scoreStatus">Excellent</div>
+                    </div>
+
+                    <!-- SSL/TLS Certificate -->
+                    <div class="result-card ssl-card">
+                        <div class="card-header">
+                            <i class="fas fa-lock"></i>
+                            <h3>SSL/TLS CERTIFICATE</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="result-item">
+                                <span class="label">Status:</span>
+                                <span class="value" id="sslStatus">Valid</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="label">Protocol:</span>
+                                <span class="value" id="sslProtocol">TLS 1.3</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="label">Expires:</span>
+                                <span class="value" id="sslExpires">2025-12-31</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Vulnerabilities Summary -->
+                    <div class="result-card vulnerabilities-card">
+                        <div class="card-header">
+                            <i class="fas fa-bug"></i>
+                            <h3>VULNERABILITIES</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="vuln-item critical">
+                                <span class="label">Critical:</span>
+                                <span class="value" id="vulnCritical">0</span>
+                            </div>
+                            <div class="vuln-item high">
+                                <span class="label">High:</span>
+                                <span class="value" id="vulnHigh">1</span>
+                            </div>
+                            <div class="vuln-item medium">
+                                <span class="label">Medium:</span>
+                                <span class="value" id="vulnMedium">3</span>
+                            </div>
+                            <div class="vuln-item low">
+                                <span class="label">Low:</span>
+                                <span class="value" id="vulnLow">2</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Report Actions -->
+                <div class="report-actions">
+                    <button class="download-btn" onclick="downloadReport()">
+                        <i class="fas fa-download"></i> Download PDF Report
+                    </button>
+                    <button class="email-btn" onclick="emailReport()">
+                        <i class="fas fa-envelope"></i> Email Report
+                    </button>
+                    <button class="schedule-btn" onclick="scheduleReport()">
+                        <i class="fas fa-calendar"></i> Schedule Scan
+                    </button>
+                </div>
+            </section>
+
+            <!-- History Section -->
+            <section id="historySection" class="dashboard-section" style="display: none;">
+                <div class="section-header">
+                    <h1>Scan History</h1>
+                    <p>View all your previous scans</p>
+                </div>
+
+                <div class="history-filters">
+                    <input type="text" id="searchHistory" placeholder="Search scans..." onkeyup="filterHistory()">
+                    <select id="sortBy" onchange="filterHistory()">
+                        <option value="recent">Most Recent</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="score-high">Highest Score</option>
+                        <option value="score-low">Lowest Score</option>
+                    </select>
+                </div>
+
+                <div class="history-table">
+                    <div class="empty-state">No scan history yet.</div>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="settingsSection" class="dashboard-section" style="display: none;">
+                <div class="section-header">
+                    <h1>Account Settings</h1>
+                    <p>Manage your account preferences</p>
+                </div>
+
+                <!-- Account Information -->
+                <div class="settings-card">
+                    <h3>Account Information</h3>
+                    <div class="setting-item">
+                        <label>Email Address</label>
+                        <p id="settingsEmail">user@example.com</p>
+                    </div>
+                    <div class="setting-item">
+                        <label>Member Since</label>
+                        <p id="settingsMemberSince">January 2024</p>
+                    </div>
+                </div>
+
+                <!-- Preferences -->
+                <div class="settings-card">
+                    <h3>Notification Preferences</h3>
+                    <div class="setting-item">
+                        <label class="setting-toggle">
+                            <input type="checkbox" id="emailNotifications" checked>
+                            <span>Email notifications for completed scans</span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label class="setting-toggle">
+                            <input type="checkbox" id="weeklyReport" checked>
+                            <span>Weekly security report</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Danger Zone -->
+                <div class="settings-card danger-zone">
+                    <h3>Danger Zone</h3>
+                    <button class="delete-account-btn" onclick="confirmDeleteAccount()">
+                        <i class="fas fa-trash"></i> Delete Account
+                    </button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="script.js"></script>
+    <script>
+        let currentReport = null;
+        let scanHistory = [];
+
+        function initDashboard() {
+            const user = auth.getCurrentUser();
+            if (!user) return;
+
+            // Update user info
+            document.getElementById('userName').textContent = user.name;
+            document.getElementById('userEmail').textContent = user.email;
+            document.getElementById('userEmailSidebar').textContent = user.email;
+            document.getElementById('scansRemaining').textContent = user.scansRemaining || 100;
+            document.getElementById('settingsEmail').textContent = user.email;
+            document.getElementById('settingsMemberSince').textContent = new Date(user.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+
+            // Load scan history from localStorage
+            loadScanHistory();
+        }
+
+        function scanWebsiteDashboard() {
+            const urlInput = document.getElementById('urlInput');
+            const url = urlInput.value.trim();
+
+            if (!url) {
+                alert('Please enter a website URL');
+                return;
+            }
+
+            if (!isValidUrl(url)) {
+                alert('Please enter a valid URL');
+                return;
+            }
+
+            const user = auth.getCurrentUser();
+            if (user.scansRemaining <= 0) {
+                alert('You have reached your scan limit. Please upgrade your account.');
+                return;
+            }
+
+            // Show loading state
+            const scanBtn = document.querySelector('.scan-btn');
+            const originalText = scanBtn.innerHTML;
+            scanBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Scanning...';
+            scanBtn.disabled = true;
+
+            // Simulate scanning
+            setTimeout(() => {
+                const report = generateDetailedReport(url);
+                currentReport = report;
+                displayResults(url, report);
+
+                // Decrement scans
+                auth.decrementScans(user.email);
+                document.getElementById('scansRemaining').textContent = auth.getCurrentUser().scansRemaining;
+
+                // Save to history
+                saveScanToHistory(url, report);
+
+                // Reset button
+                scanBtn.innerHTML = originalText;
+                scanBtn.disabled = false;
+
+                // Show results
+                showSection('results');
+            }, 3000);
+        }
+
+        function saveScanToHistory(url, report) {
+            const scan = {
+                url,
+                score: report.score,
+                status: report.status,
+                timestamp: new Date().toISOString()
+            };
+            scanHistory.unshift(scan);
+            localStorage.setItem('scanHistory_' + auth.getCurrentUser().email, JSON.stringify(scanHistory));
+        }
+
+        function loadScanHistory() {
+            const user = auth.getCurrentUser();
+            const stored = localStorage.getItem('scanHistory_' + user.email);
+            scanHistory = stored ? JSON.parse(stored) : [];
+            displayRecentScans();
+        }
+
+        function displayRecentScans() {
+            const container = document.getElementById('recentScansList');
+            if (scanHistory.length === 0) {
+                container.innerHTML = '<p class="empty-state">No scans yet. Start by scanning a website above.</p>';
+                return;
+            }
+
+            container.innerHTML = scanHistory.slice(0, 5).map((scan, index) => `
+                <div class="scan-item" onclick="viewScanDetails(${index})">
+                    <div class="scan-info">
+                        <p class="scan-url">${scan.url}</p>
+                        <p class="scan-date">${new Date(scan.timestamp).toLocaleDateString()}</p>
+                    </div>
+                    <div class="scan-score">
+                        <span class="score-badge score-${scan.status.toLowerCase().replace(/\s+/g, '-')}">${scan.score}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function viewDashboard() {
+            showSection('dashboard');
+        }
+
+        function viewHistory() {
+            showSection('history');
+            populateHistoryTable();
+        }
+
+        function viewSettings() {
+            showSection('settings');
+        }
+
+        function backToDashboard() {
+            showSection('dashboard');
+        }
+
+        function showSection(section) {
+            // Hide all sections
+            document.querySelectorAll('.dashboard-section').forEach(s => s.style.display = 'none');
+            
+            // Update nav items
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+            // Show selected section
+            if (section === 'dashboard') {
+                document.getElementById('dashboardSection').style.display = 'block';
+                document.querySelector('[data-section="dashboard"]').classList.add('active');
+            } else if (section === 'results') {
+                document.getElementById('resultsSection').style.display = 'block';
+            } else if (section === 'history') {
+                document.getElementById('historySection').style.display = 'block';
+                document.querySelector('[data-section="history"]').classList.add('active');
+            } else if (section === 'settings') {
+                document.getElementById('settingsSection').style.display = 'block';
+                document.querySelector('[data-section="settings"]').classList.add('active');
+            }
+        }
+
+        function populateHistoryTable() {
+            const container = document.querySelector('.history-table');
+            if (scanHistory.length === 0) {
+                container.innerHTML = '<div class="empty-state">No scan history yet.</div>';
+                return;
+            }
+
+            container.innerHTML = `
+                <table class="history-table-content">
+                    <thead>
+                        <tr>
+                            <th>Website</th>
+                            <th>Score</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${scanHistory.map((scan, index) => `
+                            <tr>
+                                <td>${scan.url}</td>
+                                <td><span class="score-badge">${scan.score}</span></td>
+                                <td>${scan.status}</td>
+                                <td>${new Date(scan.timestamp).toLocaleDateString()}</td>
+                                <td><button onclick="viewScanDetails(${index})">View</button></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function filterHistory() {
+            // Implement filtering logic
+        }
+
+        function handleLogout() {
+            if (confirm('Are you sure you want to logout?')) {
+                auth.logout();
+                redirectToHome();
+            }
+        }
+
+        function downloadReport() {
+            alert('PDF download feature would be implemented here');
+        }
+
+        function emailReport() {
+            alert('Email feature would be implemented here');
+        }
+
+        function scheduleReport() {
+            alert('Schedule scan feature would be implemented here');
+        }
+
+        function confirmDeleteAccount() {
+            if (confirm('Are you sure? This action cannot be undone.')) {
+                alert('Account deletion would be implemented here');
+            }
+        }
+
+        function displayResults(url, report) {
+            const domain = new URL(url).hostname;
+            document.getElementById('resultWebsite').textContent = `Scan Results for ${domain}`;
+            document.getElementById('scoreValue').textContent = report.score;
+            document.getElementById('scoreStatus').textContent = report.status;
+            document.getElementById('sslStatus').textContent = report.ssl.status;
+            document.getElementById('sslProtocol').textContent = report.ssl.protocol;
+            document.getElementById('sslExpires').textContent = report.ssl.expires;
+            document.getElementById('vulnCritical').textContent = report.vulnerabilities.critical;
+            document.getElementById('vulnHigh').textContent = report.vulnerabilities.high;
+            document.getElementById('vulnMedium').textContent = report.vulnerabilities.medium;
+            document.getElementById('vulnLow').textContent = report.vulnerabilities.low;
+
+            // Update progress circle
+            const circle = document.getElementById('progressCircle');
+            const circumference = 2 * Math.PI * 45;
+            const offset = circumference - (report.score / 100) * circumference;
+            circle.style.strokeDashoffset = offset;
+        }
+    </script>
+</body>
+</html>
