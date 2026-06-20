@@ -201,7 +201,7 @@
 
                         <div class="result-item">
                             <span class="label">Meta Description:</span>
-                            <span class="value" id="seoMetaDescription">--</span>
+                            <span class="value clickable-seo" id="seoMetaDescription" onclick="showMetaDescriptionDetails()">--</span>
                         </div>
 
                         <div class="result-item">
@@ -216,7 +216,7 @@
 
                         <div class="result-item">
                             <span class="label">H1 Tags:</span>
-                            <span class="value" id="headingCount">--</span>
+                            <span class="value clickable-seo" id="headingCount" onclick="showH1TagsDetails()">--</span>
                         </div>
 
                         <div class="result-item">
@@ -308,6 +308,63 @@
         <div class="result-item">
             <span class="label">TXT Records:</span>
             <span class="value" id="dnsTXT">-</span>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ========================= -->
+<!-- WHOIS INFORMATION -->
+<!-- ========================= -->
+
+<div class="result-card">
+
+    <div class="card-header">
+        <i class="fas fa-id-card"></i>
+        <h3>WHOIS Information</h3>
+    </div>
+
+    <div class="info-grid">
+
+        <div class="info-item">
+            <span>Domain</span>
+            <strong id="whoisDomain">-</strong>
+        </div>
+
+        <div class="info-item">
+            <span>Registrar</span>
+            <strong id="whoisRegistrar">-</strong>
+        </div>
+
+        <div class="info-item">
+            <span>Created</span>
+            <strong id="whoisCreated">-</strong>
+        </div>
+
+        <div class="info-item">
+            <span>Expires</span>
+            <strong id="whoisExpires">-</strong>
+        </div>
+
+        <div class="info-item">
+            <span>Updated</span>
+            <strong id="whoisUpdated">-</strong>
+        </div>
+
+        <div class="info-item">
+            <span>Domain Age</span>
+            <strong id="whoisAge">-</strong>
+        </div>
+
+        <div class="info-item">
+            <span>Name Servers</span>
+            <strong id="whoisNameservers">-</strong>
+        </div>
+
+        <div class="info-item">
+            <span>Status</span>
+            <strong id="whoisStatus">-</strong>
         </div>
 
     </div>
@@ -1223,6 +1280,21 @@
         }
 
     </script>
+
+    <!-- =========================
+         DETAIL MODAL
+    ========================== -->
+    <div id="detailModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Details</h2>
+                <button class="modal-close" onclick="closeDetailModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Content will be filled by JavaScript -->
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 

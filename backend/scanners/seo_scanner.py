@@ -54,6 +54,12 @@ def scan_seo(url):
         # =========================
 
         h1_tags = soup.find_all("h1")
+        
+        h1_texts = [
+            h1.get_text(strip=True)
+            for h1 in h1_tags
+            if h1.get_text(strip=True)
+        ]
 
         # =========================
         # IMAGES WITHOUT ALT
@@ -88,6 +94,9 @@ def scan_seo(url):
 
             "h1_count":
                 len(h1_tags),
+
+            "h1_tags":
+                h1_texts,
 
             "missing_alt_images":
                 missing_alt,

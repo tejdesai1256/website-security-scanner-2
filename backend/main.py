@@ -6,6 +6,7 @@ from scanners.headers_scanner import scan_headers
 from scanners.ssl_scanner import scan_ssl
 from scanners.port_scanner import scan_ports
 from scanners.dns_scanner import scan_dns
+from scanners.whois_scanner import scan_whois
 
 from services.scoring_service import calculate_score
 from scanners.seo_scanner import scan_seo
@@ -47,6 +48,8 @@ def scan_website(data: ScanRequest):
 
     dns_result = scan_dns(data.url)
 
+    whois_result = scan_whois(data.url)
+
     performance_result = scan_performance(data.url)
 
     score_result = calculate_score(
@@ -55,7 +58,8 @@ def scan_website(data: ScanRequest):
         ports_result,
         seo_result,
         performance_result,
-        dns_result
+        dns_result,
+        whois_result
     )
 
     return {
@@ -72,6 +76,7 @@ def scan_website(data: ScanRequest):
             "ports": ports_result,
             "seo": seo_result,
             "dns": dns_result,
-            "performance": performance_result
+            "performance": performance_result,
+            "whois": whois_result,
         }
     }

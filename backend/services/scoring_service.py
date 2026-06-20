@@ -1,4 +1,4 @@
-def calculate_score(headers, ssl_data, ports, seo=None, performance=None, dns=None):
+def calculate_score(headers, ssl_data, ports, seo=None, performance=None, dns=None, whois=None):
 
     score = 100
 

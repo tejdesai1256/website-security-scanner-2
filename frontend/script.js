@@ -241,6 +241,55 @@ document.getElementById("dnsTXT").textContent =
 
 
         // =========================
+        // WHOIS INFORMATION
+        // =========================
+
+        const whois = data.scans.whois || {};
+
+        // Check if WHOIS scan was successful
+        if (!whois.success && whois.error) {
+            document.getElementById("whoisDomain").textContent = "Error: " + whois.error;
+            document.getElementById("whoisRegistrar").textContent = "-";
+            document.getElementById("whoisCreated").textContent = "-";
+            document.getElementById("whoisExpires").textContent = "-";
+            document.getElementById("whoisUpdated").textContent = "-";
+            document.getElementById("whoisAge").textContent = "-";
+            document.getElementById("whoisNameservers").textContent = "-";
+            document.getElementById("whoisStatus").textContent = "-";
+        } else {
+            document.getElementById("whoisDomain").textContent =
+                whois.domain || "-";
+
+            document.getElementById("whoisRegistrar").textContent =
+                whois.registrar || "-";
+
+            document.getElementById("whoisCreated").textContent =
+                whois.creation_date || "-";
+
+            document.getElementById("whoisExpires").textContent =
+                whois.expiration_date || "-";
+
+            document.getElementById("whoisUpdated").textContent =
+                whois.updated_date || "-";
+
+            document.getElementById("whoisAge").textContent =
+                whois.domain_age_days
+                    ? whois.domain_age_days + " days"
+                    : "-";
+
+            document.getElementById("whoisNameservers").textContent =
+                (whois.name_servers && whois.name_servers.length > 0)
+                    ? whois.name_servers.join(", ")
+                    : "-";
+
+            document.getElementById("whoisStatus").textContent =
+                (Array.isArray(whois.status) && whois.status.length > 0)
+                    ? whois.status.join(", ")
+                    : "-";
+        }
+
+
+        // =========================
         // SEO
         // =========================
 
@@ -698,3 +747,178 @@ function toggleFAQ(element) {
     element.classList.toggle('active');
     element.nextElementSibling.classList.toggle('active');
 }
+
+// =========================
+// SEO MODAL FUNCTIONS
+// =========================
+
+// Close Modal
+function closeDetailModal() {
+    const modal = document.getElementById('detailModal');
+    modal.style.display = 'none';
+}
+
+// Show Meta Description Details
+function showMetaDescriptionDetails() {
+    if (!data || !data.scans || !data.scans.seo) {
+        alert('No SEO data available');
+        return;
+    }
+
+    const seoData = data.scans.seo;
+    const modal = document.getElementById('detailModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+
+    // Set title
+    modalTitle.innerHTML = '<i class="fas fa-file-alt"></i> Meta Description Details';
+
+    // Build content
+    let content = '';
+
+    if (seoData.meta_description) {
+        content = `
+            <div class="details-list">
+                <div class="detail-item">
+                    <div class="detail-item-label">
+                        <i class="fas fa-check-circle"></i> Meta Description Found
+                    </div>
+                    <div class="detail-item-content">
+                        ${seoData.meta_description}
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-item-label">
+                        <i class="fas fa-ruler"></i> Length
+                    </div>
+                    <div class="detail-item-content">
+                        ${seoData.meta_description.length} characters
+                        <br/>
+                        <small style="color: var(--text-secondary);">
+                            ${seoData.meta_description.length >= 120 && seoData.meta_description.length <= 160 
+                                ? '✅ Optimal length (120-160 chars)' 
+                                : '⚠️ Consider adjusting to 120-160 characters'}
+                        </small>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-item-label">
+                        <i class="fas fa-lightbulb"></i> SEO Tip
+                    </div>
+                    <div class="detail-item-content">
+                        A good meta description should be between 120-160 characters and include your main keywords. This text appears in search engine results and helps users decide whether to click your link.
+                    </div>
+                </div>
+            </div>
+        `;
+    } else {
+        content = `
+            <div class="empty-state">
+                <i class="fas fa-times-circle"></i>
+                <h3 style="color: var(--danger);">No Meta Description Found</h3>
+                <p>This page is missing a meta description. This is important for SEO and search engine visibility.</p>
+                <p style="margin-top: 1.5rem; font-size: 0.9rem;">
+                    <strong>Recommendation:</strong> Add a meta description tag to your HTML:
+                </p>
+                <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 0.5rem; margin-top: 1rem; text-align: left;">
+                    <code style="color: var(--primary);">&lt;meta name="description" content="Your description here" /&gt;</code>
+                </div>
+            </div>
+        `;
+    }
+
+    modalBody.innerHTML = content;
+    modal.style.display = 'flex';
+}
+
+// Show H1 Tags Details
+function showH1TagsDetails() {
+    if (!data || !data.scans || !data.scans.seo) {
+        alert('No SEO data available');
+        return;
+    }
+
+    const seoData = data.scans.seo;
+    const modal = document.getElementById('detailModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+
+    // Set title
+    modalTitle.innerHTML = `<i class="fas fa-heading"></i> H1 Tags Details`;
+
+    // Build content
+    let content = '';
+
+    if (seoData.h1_tags && seoData.h1_tags.length > 0) {
+        const h1List = seoData.h1_tags.map((h1, index) => `
+            <div class="detail-item">
+                <div class="detail-item-label">
+                    <i class="fas fa-heading"></i> H1 Tag #${index + 1}
+                </div>
+                <div class="detail-item-content">
+                    "${h1}"
+                </div>
+            </div>
+        `).join('');
+
+        content = `
+            <div class="details-list">
+                <div class="detail-item">
+                    <div class="detail-item-label">
+                        <i class="fas fa-check-circle"></i> Total H1 Tags Found
+                    </div>
+                    <div class="detail-item-content">
+                        ${seoData.h1_tags.length}
+                        <br/>
+                        <small style="color: var(--text-secondary);">
+                            ${seoData.h1_tags.length === 1 
+                                ? '✅ Perfect - one H1 tag per page' 
+                                : '⚠️ Best practice: use only one H1 tag per page'}
+                        </small>
+                    </div>
+                </div>
+                ${h1List}
+                <div class="detail-item">
+                    <div class="detail-item-label">
+                        <i class="fas fa-lightbulb"></i> SEO Tip
+                    </div>
+                    <div class="detail-item-content">
+                        Each page should have exactly one H1 tag that describes the main topic. It helps both users and search engines understand what your page is about. Make sure your H1 includes relevant keywords.
+                    </div>
+                </div>
+            </div>
+        `;
+    } else {
+        content = `
+            <div class="empty-state">
+                <i class="fas fa-times-circle"></i>
+                <h3 style="color: var(--danger);">No H1 Tags Found</h3>
+                <p>This page is missing H1 tags. Every page should have at least one H1 tag for proper SEO.</p>
+                <p style="margin-top: 1.5rem; font-size: 0.9rem;">
+                    <strong>Recommendation:</strong> Add an H1 tag to your HTML:
+                </p>
+                <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 0.5rem; margin-top: 1rem; text-align: left;">
+                    <code style="color: var(--primary);">&lt;h1&gt;Your Page Title Here&lt;/h1&gt;</code>
+                </div>
+            </div>
+        `;
+    }
+
+    modalBody.innerHTML = content;
+    modal.style.display = 'flex';
+}
+
+// Close modal when clicking outside of it
+document.addEventListener('click', function(event) {
+    const modal = document.getElementById('detailModal');
+    if (modal && event.target === modal) {
+        closeDetailModal();
+    }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeDetailModal();
+    }
+});

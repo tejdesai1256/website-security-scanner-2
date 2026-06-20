@@ -2879,6 +2879,191 @@ body {
     }
 }
 
+/* =========================
+   SEO MODAL STYLES
+========================= */
+
+/* Clickable SEO Elements */
+.clickable-seo {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    padding: 0.3rem 0.6rem;
+    border-radius: 0.3rem;
+}
+
+.clickable-seo:hover {
+    background: rgba(0, 212, 255, 0.2);
+    color: var(--primary);
+    box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+}
+
+.clickable-seo::after {
+    content: ' 👆';
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    font-size: 0.8rem;
+}
+
+.clickable-seo:hover::after {
+    opacity: 1;
+}
+
+/* Modal Overlay */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    backdrop-filter: blur(5px);
+    animation: fadeIn 0.3s ease;
+}
+
+/* Modal Content */
+.modal-content {
+    background: linear-gradient(135deg, rgba(26, 31, 58, 0.95) 0%, rgba(45, 53, 85, 0.95) 100%);
+    border: 2px solid var(--card-border);
+    border-radius: 1.5rem;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 212, 255, 0.3);
+    backdrop-filter: blur(20px);
+    animation: slideUp 0.4s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Modal Header */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2rem;
+    border-bottom: 1px solid var(--card-border);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.modal-header h2 {
+    color: var(--primary);
+    margin: 0;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+}
+
+.modal-close:hover {
+    color: var(--primary);
+    background: rgba(0, 212, 255, 0.2);
+}
+
+/* Modal Body */
+.modal-body {
+    padding: 2rem;
+    color: var(--text-primary);
+}
+
+.modal-body h3 {
+    color: var(--primary);
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+}
+
+.modal-body p {
+    color: var(--text-secondary);
+    line-height: 1.8;
+    margin-bottom: 1rem;
+}
+
+/* Details List */
+.details-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.detail-item {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--card-border);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.detail-item:hover {
+    background: rgba(0, 212, 255, 0.1);
+    border-color: var(--primary);
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
+}
+
+.detail-item-label {
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.detail-item-content {
+    color: var(--text-primary);
+    line-height: 1.6;
+    word-wrap: break-word;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-secondary);
+}
+
+.empty-state i {
+    font-size: 3rem;
+    color: var(--secondary);
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    font-size: 1.1rem;
+}
+
 /* ==================== AUTHENTICATION STYLES ==================== */
 
 /* Auth Section */
