@@ -2,11 +2,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from scanners.technology_scanner import scan_technology
 from scanners.headers_scanner import scan_headers
 from scanners.ssl_scanner import scan_ssl
 from scanners.port_scanner import scan_ports
 from scanners.dns_scanner import scan_dns
-from scanners.whois_scanner import scan_whois
+
 
 from services.scoring_service import calculate_score
 from scanners.seo_scanner import scan_seo
@@ -48,7 +49,9 @@ def scan_website(data: ScanRequest):
 
     dns_result = scan_dns(data.url)
 
-    whois_result = scan_whois(data.url)
+    technology_result = scan_technology(data.url)
+
+    
 
     performance_result = scan_performance(data.url)
 
@@ -59,7 +62,7 @@ def scan_website(data: ScanRequest):
         seo_result,
         performance_result,
         dns_result,
-        whois_result
+       
     )
 
     return {
@@ -77,6 +80,7 @@ def scan_website(data: ScanRequest):
             "seo": seo_result,
             "dns": dns_result,
             "performance": performance_result,
-            "whois": whois_result,
+            "technology": technology_result
+            
         }
     }

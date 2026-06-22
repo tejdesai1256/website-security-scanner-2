@@ -241,52 +241,71 @@ document.getElementById("dnsTXT").textContent =
 
 
         // =========================
-        // WHOIS INFORMATION
-        // =========================
+// TECHNOLOGY DETECTOR
+// =========================
 
-        const whois = data.scans.whois || {};
+const technologyContainer =
+    document.getElementById("technologyContainer");
 
-        // Check if WHOIS scan was successful
-        if (!whois.success && whois.error) {
-            document.getElementById("whoisDomain").textContent = "Error: " + whois.error;
-            document.getElementById("whoisRegistrar").textContent = "-";
-            document.getElementById("whoisCreated").textContent = "-";
-            document.getElementById("whoisExpires").textContent = "-";
-            document.getElementById("whoisUpdated").textContent = "-";
-            document.getElementById("whoisAge").textContent = "-";
-            document.getElementById("whoisNameservers").textContent = "-";
-            document.getElementById("whoisStatus").textContent = "-";
-        } else {
-            document.getElementById("whoisDomain").textContent =
-                whois.domain || "-";
+technologyContainer.innerHTML = "";
 
-            document.getElementById("whoisRegistrar").textContent =
-                whois.registrar || "-";
+const technology =
+    data.scans.technology;
 
-            document.getElementById("whoisCreated").textContent =
-                whois.creation_date || "-";
+if (
+    technology.success &&
+    technology.technologies &&
+    Object.keys(technology.technologies).length > 0
+){
 
-            document.getElementById("whoisExpires").textContent =
-                whois.expiration_date || "-";
+    Object.entries(technology.technologies).forEach(([key,value])=>{
 
-            document.getElementById("whoisUpdated").textContent =
-                whois.updated_date || "-";
+        const item =
+            document.createElement("div");
 
-            document.getElementById("whoisAge").textContent =
-                whois.domain_age_days
-                    ? whois.domain_age_days + " days"
-                    : "-";
+        item.className="tech-item";
 
-            document.getElementById("whoisNameservers").textContent =
-                (whois.name_servers && whois.name_servers.length > 0)
-                    ? whois.name_servers.join(", ")
-                    : "-";
+        const title =
+            document.createElement("div");
 
-            document.getElementById("whoisStatus").textContent =
-                (Array.isArray(whois.status) && whois.status.length > 0)
-                    ? whois.status.join(", ")
-                    : "-";
-        }
+        title.className="tech-title";
+
+        title.textContent =
+            key
+            .replace(/-/g," ")
+            .replace(/\b\w/g,l=>l.toUpperCase());
+
+        const techValue =
+            document.createElement("div");
+
+        techValue.className="tech-value";
+
+        techValue.textContent =
+            Array.isArray(value)
+            ? value.join(", ")
+            : value;
+
+        item.appendChild(title);
+
+        item.appendChild(techValue);
+
+        technologyContainer.appendChild(item);
+
+    });
+
+}
+else{
+
+    technologyContainer.innerHTML=
+    `
+        <div class="technology-loading">
+            No technology detected.
+        </div>
+    `;
+
+}
+
+
 
 
         // =========================

@@ -4586,3 +4586,49 @@ body {
     word-break: break-word;
     white-space: normal;
 }
+
+/* ===================================
+   TECHNOLOGY DETECTOR
+=================================== */
+
+.technology-container{
+    display:flex;
+    flex-direction:column;
+    gap:15px;
+    margin-top:20px;
+}
+
+.tech-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:10px;
+    padding:15px;
+    transition:.3s;
+}
+
+.tech-item:hover{
+    border-color:#00c8ff;
+    transform:translateY(-2px);
+}
+
+.tech-title{
+    color:#00c8ff;
+    font-weight:600;
+    min-width:180px;
+}
+
+.tech-value{
+    flex:1;
+    text-align:right;
+    color:#fff;
+    word-break:break-word;
+}
+
+.technology-loading{
+    text-align:center;
+    color:#999;
+    padding:25px;
+}
