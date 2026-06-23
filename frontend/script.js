@@ -42,7 +42,7 @@ async function scanWebsite() {
         // Backend API
         const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
             ? 'http://localhost:8000/scan'
-            : `${window.location.origin}/api/scan`;
+            : 'https://website-security-scanner-2-1.onrender.com/scan';
         
         const response =
             await fetch(
