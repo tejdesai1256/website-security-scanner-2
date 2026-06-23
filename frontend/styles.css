@@ -4632,3 +4632,334 @@ body {
     color:#999;
     padding:25px;
 }
+
+/* ===========================
+   THEME TOGGLE BUTTON
+=========================== */
+
+.theme-toggle{
+    width:45px;
+    height:45px;
+    border-radius:50%;
+    border:none;
+    cursor:pointer;
+
+    background:#1f2937;
+    color:#fff;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    font-size:18px;
+
+    transition:.3s;
+}
+
+.theme-toggle:hover{
+    transform:rotate(20deg) scale(1.05);
+}
+
+
+/* ===========================
+   LIGHT MODE
+=========================== */
+
+body.light-mode{
+
+   --bg:#f5f7fb;
+    --card:#ffffff;
+    --primary:#2563eb;
+    --secondary:#4f46e5;
+    --text:#111827;
+    --text-light:#6b7280;
+    --border:#e5e7eb;
+    --success:#22c55e;
+    --warning:#f59e0b;
+    --danger:#ef4444;
+
+    background:var(--bg);
+    color:var(--text);
+
+    transition:.35s;
+
+}
+
+/* Navbar */
+
+body.light-mode .navbar{
+  background:#ffffff;
+
+    border-bottom:1px solid var(--border);
+
+    box-shadow:0 5px 25px rgba(0,0,0,.06);
+
+
+}
+
+/* Cards */
+
+body.light-mode .result-card,
+body.light-mode .feature-card,
+body.light-mode .score-card,
+body.light-mode .risk-card,
+body.light-mode .detector-card,
+body.light-mode .step-card,
+body.light-mode .pricing-card{
+
+    background:#ffffff;
+
+    color:#222;
+
+    border:1px solid #ddd;
+
+}
+
+/* Headings */
+
+body.light-mode h1,
+body.light-mode h2,
+body.light-mode h3,
+body.light-mode h4{
+
+    color:#111;
+
+}
+
+/* Paragraphs */
+
+body.light-mode p,
+body.light-mode span,
+body.light-mode strong,
+body.light-mode li{
+
+    color:#444;
+
+}
+
+/* Inputs */
+
+body.light-mode input{
+
+    background:#fff;
+
+    color:#222;
+
+    border:1px solid #ccc;
+
+}
+
+/* Tables */
+
+body.light-mode table{
+
+    background:#fff;
+
+}
+
+body.light-mode td,
+body.light-mode th{
+
+    color:#222;
+
+}
+
+/* Footer */
+
+body.light-mode footer{
+
+    background:#fff;
+
+}
+
+/* Theme Button */
+
+body.light-mode .theme-toggle{
+
+    background:#111;
+
+    color:#fff;
+
+}
+
+body.light-mode .hero{
+
+    background:linear-gradient(
+        135deg,
+        #eef4ff,
+        #ffffff
+    );
+
+}
+
+body.light-mode .hero h1{
+
+    color:#111827;
+
+}
+
+body.light-mode .hero p{
+
+    color:#6b7280;
+
+}
+
+body.light-mode .result-card,
+body.light-mode .feature-card,
+body.light-mode .score-card,
+body.light-mode .risk-card,
+body.light-mode .pricing-card,
+body.light-mode .step-card,
+body.light-mode .detector-card{
+
+    background:#ffffff;
+
+    border:1px solid #e5e7eb;
+
+    box-shadow:
+        0 8px 30px rgba(0,0,0,.06);
+
+    transition:.3s;
+
+}
+
+body.light-mode .result-card:hover,
+body.light-mode .feature-card:hover,
+body.light-mode .pricing-card:hover{
+
+    transform:translateY(-6px);
+
+    box-shadow:
+        0 15px 35px rgba(37,99,235,.15);
+
+}
+
+body.light-mode input{
+
+    background:white;
+
+    color:#111827;
+
+    border:1px solid #d1d5db;
+
+}
+
+body.light-mode input:focus{
+
+    border-color:#2563eb;
+
+    box-shadow:
+        0 0 0 4px rgba(37,99,235,.15);
+
+}
+body.light-mode button,
+body.light-mode .scan-btn{
+
+    background:linear-gradient(
+        135deg,
+        #2563eb,
+        #4f46e5
+    );
+
+    color:white;
+
+}
+
+body.light-mode button:hover{
+
+    transform:translateY(-2px);
+
+    box-shadow:
+        0 10px 25px rgba(37,99,235,.25);
+
+}
+
+body.light-mode table{
+
+    background:white;
+
+    border-radius:15px;
+
+}
+
+body.light-mode th{
+
+    background:#f3f4f6;
+
+    color:#111827;
+
+}
+
+body.light-mode td{
+
+    color:#374151;
+
+    border-bottom:1px solid #ececec;
+
+}
+
+body.light-mode h1,
+body.light-mode h2,
+body.light-mode h3,
+body.light-mode h4{
+
+    color:#111827;
+
+}
+
+body.light-mode p,
+body.light-mode span,
+body.light-mode li{
+
+    color:#6b7280;
+
+}
+
+body.light-mode strong{
+
+    color:#111827;
+
+}
+
+
+body.light-mode .card-header i{
+
+    color:#2563eb;
+
+}
+
+body.light-mode .feature-icon{
+
+    background:#eef4ff;
+
+    color:#2563eb;
+
+}
+
+body.light-mode #progressCircle{
+
+    stroke:#2563eb;
+
+}
+
+body.light-mode .progress-bg{
+
+    stroke:#dbeafe;
+
+}
+
+body.light-mode footer{
+
+    background:#ffffff;
+
+    border-top:1px solid #e5e7eb;
+
+}body.light-mode .theme-toggle{
+
+    background:#2563eb;
+
+    color:white;
+
+    box-shadow:0 5px 15px rgba(37,99,235,.3);
+
+}
