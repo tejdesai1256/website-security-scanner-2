@@ -110,10 +110,17 @@ console.log("API Response:", data);
         ).textContent =
             score;
 
-        document.getElementById(
-            'scoreStatus'
-        ).textContent =
-            data.summary.risk_level;
+        const scoreStatus = document.getElementById('scoreStatus');
+        scoreStatus.textContent = data.summary.risk_level;
+        scoreStatus.classList.remove('risk-low', 'risk-medium', 'risk-high');
+        const riskVal = (data.summary.risk_level || '').toUpperCase();
+        if (riskVal === 'HIGH' || riskVal.includes('HIGH')) {
+            scoreStatus.classList.add('risk-high');
+        } else if (riskVal === 'MEDIUM' || riskVal.includes('MEDIUM')) {
+            scoreStatus.classList.add('risk-medium');
+        } else {
+            scoreStatus.classList.add('risk-low');
+        }
 
         // Progress circle
         const progressCircle =

@@ -1562,11 +1562,33 @@ body {
     color: var(--primary);
 }
 
-.score-status {
-    font-size: 1.1rem;
+.score-risk-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 1.5rem;
     font-weight: 600;
+}
+
+.score-status {
+    font-size: 1.25rem;
+    font-weight: 700;
     color: var(--success);
-    margin-top: 1rem;
+    margin-top: 0.4rem;
+    transition: color 0.3s ease;
+}
+
+.score-status.risk-low {
+    color: var(--success);
+}
+
+.score-status.risk-medium {
+    color: var(--warning);
+}
+
+.score-status.risk-high {
+    color: var(--danger);
 }
 
 /* Result Cards */
