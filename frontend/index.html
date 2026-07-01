@@ -111,9 +111,14 @@
 
                 <h2 id="resultWebsite"></h2>
 
-                <button class="download-btn" onclick="downloadReport()">
-                    <i class="fas fa-download"></i> Download Report
-                </button>
+                <div class="results-header-actions">
+                    <a href="#" target="_blank" id="urlscanExternalLink" class="urlscan-btn">
+                        <i class="fas fa-external-link-alt"></i> urlscan.io Analysis
+                    </a>
+                    <button class="download-btn" onclick="downloadReport()">
+                        <i class="fas fa-download"></i> Download Report
+                    </button>
+                </div>
 
             </div>
 
@@ -188,6 +193,12 @@
                             <span class="value" id="sslCert">--</span>
                         </div>
 
+                        <div class="card-external-link">
+                            <a href="#" target="_blank" id="sslExternalLink" class="external-link-btn">
+                                <i class="fas fa-external-link-alt"></i> Verify on SSLShopper
+                            </a>
+                        </div>
+
                     </div>
                 </div>
 
@@ -229,6 +240,12 @@
                         <div class="result-item">
                             <span class="label">Images Missing ALT:</span>
                             <span class="value" id="missingAlt">--</span>
+                        </div>
+
+                        <div class="card-external-link">
+                            <a href="#" target="_blank" id="seoExternalLink" class="external-link-btn">
+                                <i class="fas fa-external-link-alt"></i> Verify on SEOptimer
+                            </a>
                         </div>
 
                     </div>
@@ -279,6 +296,12 @@
                             <span class="value" id="mobileFriendly">--</span>
                         </div>
 
+                        <div class="card-external-link">
+                            <a href="#" target="_blank" id="performanceExternalLink" class="external-link-btn">
+                                <i class="fas fa-external-link-alt"></i> Analyze on PageSpeed Insights
+                            </a>
+                        </div>
+
                     </div>
                 </div>
 
@@ -317,6 +340,12 @@
             <span class="value" id="dnsTXT">-</span>
         </div>
 
+        <div class="card-external-link">
+            <a href="#" target="_blank" id="dnsExternalLink" class="external-link-btn">
+                <i class="fas fa-external-link-alt"></i> Check DNS on DNSChecker
+            </a>
+        </div>
+
     </div>
 
 </div>
@@ -339,6 +368,12 @@
             No technology detected.
         </div>
 
+    </div>
+
+    <div class="card-external-link">
+        <a href="#" target="_blank" id="techExternalLink" class="external-link-btn">
+            <i class="fas fa-external-link-alt"></i> Identify on TechnologyChecker
+        </a>
     </div>
 
 </div>
@@ -388,6 +423,12 @@
                         <div class="result-item">
                             <span class="label">Low Vulnerabilities:</span>
                             <span class="value" id="lowVuln">--</span>
+                        </div>
+
+                        <div class="card-external-link">
+                            <a href="#" target="_blank" id="portExternalLink" class="external-link-btn">
+                                <i class="fas fa-external-link-alt"></i> Port Scan on DNSChecker
+                            </a>
                         </div>
                     </div>
                 </div>

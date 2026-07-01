@@ -382,6 +382,22 @@ else{
             recommendations
         );
 
+        // =========================
+        // EXTERNAL CHECK LINKS
+        // =========================
+        const hostname = new URL(url).hostname;
+        const ipAddress = data.scans?.ports?.ip_address || data.scans?.dns?.ip_address || '';
+
+        document.getElementById('urlscanExternalLink').href = `https://urlscan.io/search/#${hostname}`;
+        document.getElementById('sslExternalLink').href = `https://www.sslshopper.com/ssl-checker.html#hostname=${hostname}`;
+        document.getElementById('seoExternalLink').href = `https://www.seoptimer.com/${hostname}`;
+        document.getElementById('performanceExternalLink').href = `https://pagespeed.web.dev/analysis?url=${encodeURIComponent(url)}`;
+        document.getElementById('dnsExternalLink').href = `https://dnschecker.org/#A/${hostname}`;
+        document.getElementById('techExternalLink').href = `https://technologychecker.io/`;
+        document.getElementById('portExternalLink').href = ipAddress 
+            ? `https://dnschecker.org/port-scanner.php?query=${ipAddress}` 
+            : `https://dnschecker.org/port-scanner.php?query=${hostname}`;
+
         // Reset button
         scanBtn.innerHTML =
             originalText;
