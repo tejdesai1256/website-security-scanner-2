@@ -1,0 +1,52 @@
+### 🛡️ Content-Security-Policy (CSP)
+
+**CSP** is a security header that tells the browser which content sources are trusted. It's the most powerful defense against **Cross-Site Scripting (XSS)** attacks.
+
+#### How CSP works:
+```http
+Content-Security-Policy: default-src 'self'; script-src 'self' https://trusted.cdn.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'none';
+```
+
+#### Server Configuration Examples:
+
+##### Nginx
+```nginx
+add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;" always;
+```
+
+##### Apache (.htaccess)
+```apache
+<IfModule mod_headers.c>
+    Header set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;"
+</IfModule>
+```
+
+##### Node.js / Express
+```javascript
+const helmet = require('helmet');
+app.use(helmet.contentSecurityPolicy({
+    directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:"]
+    }
+}));
+```
+
+##### FastAPI / Python
+```python
+@app.middleware("http")
+async def add_csp(request, call_next):
+    response = await call_next(request)
+    response.headers["Content-Security-Policy"] = "default-src 'self';"
+    return response
+```
+
+##### PHP
+```php
+header("Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';");
+```
+
+#### 🗣️ Simple Explanation:
+> CSP is like a **guest list** for your website. Only the sources you explicitly allow (trusted scripts, styles, images) are permitted in — everything else is blocked at the door.
