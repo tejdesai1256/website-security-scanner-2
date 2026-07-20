@@ -1464,6 +1464,7 @@ def call_gemini_api(prompt: str, custom_api_key: str = None) -> str:
     """Call Gemini API and return the response text, or None on failure."""
     api_key = custom_api_key or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
 
+
     # Skip if key is not set or is the PageSpeed key
     if not api_key or api_key == os.getenv("PAGESPEED_API_KEY"):
         return None
