@@ -140,58 +140,66 @@ def generate_human_summary(website_info, score_result, ssl_result, headers_resul
 # Scan route
 @app.post("/scan")
 def scan_website(data: ScanRequest):
+    try:
+        headers_result = scan_headers(data.url)
+        ssl_result = scan_ssl(data.url)
+        ports_result = scan_ports(data.url)
+        seo_result = scan_seo(data.url)
+        dns_result = scan_dns(data.url)
+        technology_result = scan_technology(data.url)
+        performance_result = scan_performance(data.url)
+        info_result = scan_info(data.url)
 
-    headers_result = scan_headers(data.url)
+        score_result = calculate_score(
+            headers_result,
+            ssl_result,
+            ports_result,
+            seo_result,
+            performance_result,
+            dns_result,
+        )
 
-    ssl_result = scan_ssl(data.url)
+        human_summary = generate_human_summary(
+            info_result,
+            score_result,
+            ssl_result,
+            headers_result,
+            ports_result,
+            performance_result
+        )
 
-    ports_result = scan_ports(data.url)
-
-    seo_result = scan_seo(data.url)
-
-    dns_result = scan_dns(data.url)
-
-    technology_result = scan_technology(data.url)
-
-    performance_result = scan_performance(data.url)
-    
-    info_result = scan_info(data.url)
-
-    score_result = calculate_score(
-        headers_result,
-        ssl_result,
-        ports_result,
-        seo_result,
-        performance_result,
-        dns_result,
-    )
-
-    human_summary = generate_human_summary(
-        info_result,
-        score_result,
-        ssl_result,
-        headers_result,
-        ports_result,
-        performance_result
-    )
-
-    return {
-        "success": True,
-        "website": data.url,
-        "summary": {
-            "security_score": score_result["security_score"],
-            "risk_level": score_result["risk_level"],
-            "recommendations": score_result["recommendations"],
-            "human_summary": human_summary
-        },
-        "website_info": info_result,
-        "scans": {
-            "ssl": ssl_result,
-            "headers": headers_result,
-            "ports": ports_result,
-            "seo": seo_result,
-            "dns": dns_result,
-            "performance": performance_result,
-            "technology": technology_result
+        return {
+            "success": True,
+            "website": data.url,
+            "summary": {
+                "security_score": score_result.get("security_score", 50) if score_result else 50,
+                "risk_level": score_result.get("risk_level", "UNKNOWN") if score_result else "UNKNOWN",
+                "recommendations": score_result.get("recommendations", []) if score_result else [],
+                "human_summary": human_summary
+            },
+            "website_info": info_result,
+            "scans": {
+                "ssl": ssl_result,
+                "headers": headers_result,
+                "ports": ports_result,
+                "seo": seo_result,
+                "dns": dns_result,
+                "performance": performance_result,
+                "technology": technology_result
+            }
         }
-    }
+    except Exception as e:
+        print(f"Error executing scan: {e}")
+        return {
+            "success": False,
+            "website": data.url,
+            "error": str(e),
+            "summary": {
+                "security_score": 0,
+                "risk_level": "UNKNOWN",
+                "recommendations": ["Scan failed to complete due to an unexpected error."],
+                "human_summary": f"An error occurred while scanning {data.url}: {str(e)}"
+            },
+            "website_info": {},
+            "scans": {}
+        }
