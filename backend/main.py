@@ -141,14 +141,19 @@ def generate_human_summary(website_info, score_result, ssl_result, headers_resul
 @app.post("/scan")
 def scan_website(data: ScanRequest):
     try:
-        headers_result = scan_headers(data.url)
-        ssl_result = scan_ssl(data.url)
-        ports_result = scan_ports(data.url)
-        seo_result = scan_seo(data.url)
-        dns_result = scan_dns(data.url)
-        technology_result = scan_technology(data.url)
-        performance_result = scan_performance(data.url)
-        info_result = scan_info(data.url)
+        # Normalize and clean input URL
+        target_url = data.url.strip().replace(" ", "")
+        if not target_url.startswith("http://") and not target_url.startswith("https://"):
+            target_url = "https://" + target_url
+
+        headers_result = scan_headers(target_url)
+        ssl_result = scan_ssl(target_url)
+        ports_result = scan_ports(target_url)
+        seo_result = scan_seo(target_url)
+        dns_result = scan_dns(target_url)
+        technology_result = scan_technology(target_url)
+        performance_result = scan_performance(target_url)
+        info_result = scan_info(target_url)
 
         score_result = calculate_score(
             headers_result,
@@ -170,7 +175,7 @@ def scan_website(data: ScanRequest):
 
         return {
             "success": True,
-            "website": data.url,
+            "website": target_url,
             "summary": {
                 "security_score": score_result.get("security_score", 50) if score_result else 50,
                 "risk_level": score_result.get("risk_level", "UNKNOWN") if score_result else "UNKNOWN",
