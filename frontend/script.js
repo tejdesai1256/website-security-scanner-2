@@ -230,25 +230,27 @@ console.log("API Response:", data);
         // PERFORMANCE
         // =========================
 
-        document.getElementById(
-            'performanceScore'
-        ).textContent =
-            data.scans.performance.performance_score;
-
-        document.getElementById(
-            'fcp'
-        ).textContent =
-            data.scans.performance.first_contentful_paint;
-
-        document.getElementById(
-            'lcp'
-        ).textContent =
-            data.scans.performance.largest_contentful_paint;
-
-        document.getElementById(
-            'speedIndex'
-        ).textContent =
-            data.scans.performance.speed_index;
+        const perf = data.scans?.performance;
+        if (perf && perf.success !== false) {
+            document.getElementById('performanceScore').textContent = 
+                perf.performance_score !== undefined && perf.performance_score !== null 
+                    ? Math.round(perf.performance_score) 
+                    : '--';
+            document.getElementById('fcp').textContent = perf.first_contentful_paint || '--';
+            document.getElementById('lcp').textContent = perf.largest_contentful_paint || '--';
+            document.getElementById('speedIndex').textContent = perf.speed_index || '--';
+            document.getElementById('pageLoadTime').textContent = perf.page_load_time || '--';
+            document.getElementById('ttfb').textContent = perf.ttfb || '--';
+            document.getElementById('mobileFriendly').textContent = perf.mobile_friendly || '--';
+        } else {
+            document.getElementById('performanceScore').textContent = '--';
+            document.getElementById('fcp').textContent = '--';
+            document.getElementById('lcp').textContent = '--';
+            document.getElementById('speedIndex').textContent = '--';
+            document.getElementById('pageLoadTime').textContent = '--';
+            document.getElementById('ttfb').textContent = '--';
+            document.getElementById('mobileFriendly').textContent = '--';
+        }
 
 
         // =========================
@@ -1063,7 +1065,15 @@ function populateSeoDetails(seoData) {
 }
 
 function populatePerformanceDetails(perfData) {
-    if (!perfData) return;
+    if (!perfData || perfData.success === false) {
+        document.getElementById('perfTbt').textContent = '--';
+        document.getElementById('perfCls').textContent = '--';
+        const oppsContainer = document.getElementById('perfOpportunities');
+        if (oppsContainer) {
+            oppsContainer.innerHTML = '<div style="opacity: 0.6; padding: 4px 0;">Performance scan details unavailable.</div>';
+        }
+        return;
+    }
     document.getElementById('perfTbt').textContent = perfData.total_blocking_time || '0 ms';
     document.getElementById('perfCls').textContent = perfData.cumulative_layout_shift || '0';
     
