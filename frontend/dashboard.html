@@ -247,6 +247,35 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- CORS Configuration Card -->
+                    <div class="result-card cors-card">
+                        <div class="card-header">
+                            <i class="fas fa-exchange-alt"></i>
+                            <h3>CORS Configuration</h3>
+                        </div>
+                        <p class="card-subtitle" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">Checks whether other websites can improperly access this site's data.</p>
+                        <div class="card-content">
+                            <div class="result-item">
+                                <span class="label">Risk Level:</span>
+                                <span class="value" id="dashboardCorsRiskBadge"><span class="badge risk-low" style="padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 0.8rem; background: rgba(0,0,0,0.3); color: var(--success); border: 1px solid var(--success);">LOW</span></span>
+                            </div>
+                            <div class="card-expand-toggle">
+                                <button class="expand-btn" onclick="toggleCardDetails('dashCorsDetails', this)">
+                                    <i class="fas fa-chevron-down"></i> <span>View Full Details</span>
+                                </button>
+                            </div>
+                            <div class="card-expanded-details" id="dashCorsDetails">
+                                <div class="detail-row"
+                                    style="flex-direction: column; align-items: flex-start; gap: 4px; border-bottom: none;">
+                                    <span class="label">CORS Findings:</span>
+                                    <div id="dashCorsFindingsList"
+                                        style="width: 100%; font-size: 0.85rem; line-height: 1.4; margin-top: 5px;">
+                                        -</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Chatbot card removed and moved to floating widget -->

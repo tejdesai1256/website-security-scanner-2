@@ -1,4 +1,4 @@
-def calculate_score(headers, ssl_data, ports, seo=None, performance=None, dns=None):
+def calculate_score(headers, ssl_data, ports, seo=None, performance=None, dns=None, cors=None):
     try:
         headers = headers or {}
         ssl_data = ssl_data or {}
@@ -81,6 +81,20 @@ def calculate_score(headers, ssl_data, ports, seo=None, performance=None, dns=No
                 score -= 15
             elif perf_score < 70:
                 score -= 10
+
+        # =========================
+        # CORS CHECKS
+        # =========================
+        if cors and cors.get("success"):
+            cors_risk = cors.get("risk_level", "LOW")
+            CORS_PENALTIES = {"CRITICAL": 25, "HIGH": 15, "MEDIUM": 5, "LOW": 0}
+            penalty = CORS_PENALTIES.get(cors_risk, 0)
+            if penalty > 0:
+                score -= penalty
+                recommendations.append(
+                    f"CORS misconfiguration detected ({cors_risk.lower()} risk) — restrict "
+                    f"Access-Control-Allow-Origin to a trusted allowlist"
+                )
 
         # =========================
         # FINAL SCORE

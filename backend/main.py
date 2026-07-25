@@ -12,6 +12,7 @@ from scanners.info_scanner import scan_info
 from services.scoring_service import calculate_score
 from scanners.seo_scanner import scan_seo
 from scanners.performance_scanner import scan_performance
+from scanners.cors_scanner import scan_cors
 from services.ai_service import get_ai_response
 
 app = FastAPI()
@@ -154,6 +155,7 @@ def scan_website(data: ScanRequest):
         technology_result = scan_technology(target_url)
         performance_result = scan_performance(target_url)
         info_result = scan_info(target_url)
+        cors_result = scan_cors(target_url)
 
         score_result = calculate_score(
             headers_result,
@@ -162,6 +164,7 @@ def scan_website(data: ScanRequest):
             seo_result,
             performance_result,
             dns_result,
+            cors_result,
         )
 
         human_summary = generate_human_summary(
@@ -190,7 +193,8 @@ def scan_website(data: ScanRequest):
                 "seo": seo_result,
                 "dns": dns_result,
                 "performance": performance_result,
-                "technology": technology_result
+                "technology": technology_result,
+                "cors": cors_result
             }
         }
     except Exception as e:

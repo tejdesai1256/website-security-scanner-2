@@ -426,6 +426,7 @@ else{
         populateTechnologyDetails(data.scans.technology);
         populatePortsDetails(data.scans.ports);
         populateHeadersDetails(data.scans.headers);
+        populateCorsDetails(data.scans.cors);
 
         // Reset button
         scanBtn.innerHTML =
@@ -573,6 +574,10 @@ SEO ANALYSIS:
 - Meta Description: ${document.getElementById('seoMetaDescription').textContent || 'Missing'}
 - H1 Count: ${document.getElementById('headingCount').textContent || '0'}
 - Missing Alt Images: ${document.getElementById('missingAlt').textContent || '0'}
+
+CORS CONFIGURATION:
+- Risk Level: ${data?.scans?.cors?.risk_level || 'LOW'}
+- Findings: ${data?.scans?.cors?.findings ? data.scans.cors.findings.map(f => `[${f.severity}] ${f.issue}: ${f.detail}`).join('; ') : 'None'}
 
 RECOMMENDATIONS:
 ${Array.from(document.querySelectorAll('#recommendationsList li')).map(li => `- ${li.textContent}`).join('\n') || 'None'}
@@ -1180,6 +1185,73 @@ function populateHeadersDetails(headersData) {
     }
 }
 
+function populateCorsDetails(corsData) {
+    const riskBadgeContainer = document.getElementById('corsRiskBadge');
+    const dashRiskBadgeContainer = document.getElementById('dashboardCorsRiskBadge');
+    const findingsContainer = document.getElementById('corsFindingsList');
+    const dashFindingsContainer = document.getElementById('dashCorsFindingsList');
+
+    if (!corsData || corsData.success === false) {
+        const errorMsg = corsData?.error || 'CORS check unavailable';
+        const fallbackHtml = `<div style="color: var(--text-secondary); opacity: 0.8; padding: 6px 0;"><i class="fas fa-exclamation-triangle" style="color: var(--warning); margin-right: 6px;"></i> CORS check unavailable: ${errorMsg}</div>`;
+        if (findingsContainer) findingsContainer.innerHTML = fallbackHtml;
+        if (dashFindingsContainer) dashFindingsContainer.innerHTML = fallbackHtml;
+        if (riskBadgeContainer) riskBadgeContainer.innerHTML = `<span class="badge risk-medium" style="padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 0.8rem; background: rgba(0,0,0,0.3); color: var(--warning); border: 1px solid var(--warning);">N/A</span>`;
+        if (dashRiskBadgeContainer) dashRiskBadgeContainer.innerHTML = `<span class="badge risk-medium" style="padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 0.8rem; background: rgba(0,0,0,0.3); color: var(--warning); border: 1px solid var(--warning);">N/A</span>`;
+        return;
+    }
+
+    const riskLevel = (corsData.risk_level || 'LOW').toUpperCase();
+    let badgeClass = 'risk-low';
+    let badgeColor = 'var(--success)';
+    if (riskLevel === 'CRITICAL') {
+        badgeClass = 'risk-critical';
+        badgeColor = 'var(--danger)';
+    } else if (riskLevel === 'HIGH') {
+        badgeClass = 'risk-high';
+        badgeColor = 'var(--danger)';
+    } else if (riskLevel === 'MEDIUM') {
+        badgeClass = 'risk-medium';
+        badgeColor = 'var(--warning)';
+    }
+
+    const badgeHtml = `<span class="badge ${badgeClass}" style="padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 0.8rem; background: rgba(0,0,0,0.3); color: ${badgeColor}; border: 1px solid ${badgeColor};">${riskLevel}</span>`;
+
+    if (riskBadgeContainer) riskBadgeContainer.innerHTML = badgeHtml;
+    if (dashRiskBadgeContainer) dashRiskBadgeContainer.innerHTML = badgeHtml;
+
+    const findings = corsData.findings || [];
+    let contentHtml = '';
+
+    if (findings.length > 0) {
+        contentHtml = findings.map(item => {
+            const sev = (item.severity || 'INFO').toUpperCase();
+            let itemColor = 'var(--primary)';
+            if (sev === 'CRITICAL' || sev === 'HIGH') itemColor = 'var(--danger)';
+            else if (sev === 'MEDIUM') itemColor = 'var(--warning)';
+            else if (sev === 'INFO') itemColor = 'var(--success)';
+
+            return `
+                <div class="cors-finding-item" style="padding: 10px; border-radius: 8px; background: rgba(0, 0, 0, 0.25); margin-bottom: 8px; border-left: 3px solid ${itemColor};">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <strong style="color: var(--text-primary); font-size: 0.9rem;">${item.issue}</strong>
+                        <span style="font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; background: rgba(0,0,0,0.4); color: ${itemColor}; border: 1px solid ${itemColor};">${sev}</span>
+                    </div>
+                    <p style="color: var(--text-secondary); font-size: 0.82rem; margin: 0; line-height: 1.4;">${item.detail}</p>
+                </div>
+            `;
+        }).join('');
+    } else {
+        contentHtml = `<div style="color: var(--success); padding: 4px 0;"><i class="fas fa-check-circle"></i> No CORS misconfiguration detected.</div>`;
+    }
+
+    if (findingsContainer) findingsContainer.innerHTML = contentHtml;
+    if (dashFindingsContainer) dashFindingsContainer.innerHTML = contentHtml;
+}
+
+const renderCorsResult = populateCorsDetails;
+
+
 // ==========================================
 // AI SECURITY CHATBOX INTERACTION SCRIPT
 // ==========================================
@@ -1596,6 +1668,12 @@ const MODULE_SUGGESTIONS = {
         'Are my backend versions safe?',
         'Explain server cookies safety',
         'Hide server signature'
+    ],
+    cors: [
+        'Explain CORS misconfiguration',
+        'What is arbitrary origin reflection?',
+        'Why is null origin unsafe?',
+        'How to fix Access-Control-Allow-Origin'
     ]
 };
 
@@ -1618,6 +1696,8 @@ function autoDetectActiveModule() {
     const panelMap = {
         sslDetails:     'ssl',
         headersDetails: 'headers',
+        corsDetails:    'cors',
+        dashCorsDetails:'cors',
         portsDetails:   'ports',
         dnsDetails:     'dns',
         seoDetails:     'seo',
@@ -1633,11 +1713,12 @@ function autoDetectActiveModule() {
     const cardMap = [
         { selector: '.ssl-card',         module: 'ssl'         },
         { selector: '.headers-card',     module: 'headers'     },
+        { selector: '.cors-card',        module: 'cors'        },
         { selector: '.port-card',        module: 'ports'       },
         { selector: '.dns-card',         module: 'dns'         },
         { selector: '.seo-card',         module: 'seo'         },
         { selector: '.performance-card', module: 'performance' },
-        { selector: '.result-card:not(.ssl-card):not(.headers-card):not(.port-card):not(.dns-card):not(.seo-card):not(.performance-card)', module: 'technology' }
+        { selector: '.result-card:not(.ssl-card):not(.headers-card):not(.cors-card):not(.port-card):not(.dns-card):not(.seo-card):not(.performance-card)', module: 'technology' }
     ];
     const vMid = window.innerHeight / 2;
     let bestMod = 'general', bestDist = Infinity;
