@@ -1231,18 +1231,53 @@ function populateCorsDetails(corsData) {
             else if (sev === 'MEDIUM') itemColor = 'var(--warning)';
             else if (sev === 'INFO') itemColor = 'var(--success)';
 
+            const confidence = item.confidence ? `<span style="font-size: 0.7rem; font-weight: 600; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.06); color: var(--text-secondary);"><i class="fas fa-shield-alt" style="font-size: 0.65rem; margin-right: 3px;"></i>${item.confidence}</span>` : '';
+            
+            let exploitabilityColor = 'var(--text-secondary)';
+            if (item.exploitability === 'Confirmed') exploitabilityColor = 'var(--danger)';
+            else if (item.exploitability === 'Potential') exploitabilityColor = 'var(--warning)';
+            else if (item.exploitability === 'None') exploitabilityColor = 'var(--success)';
+            
+            const exploitability = item.exploitability ? `<span style="font-size: 0.7rem; font-weight: 600; padding: 2px 6px; border-radius: 4px; background: rgba(0,0,0,0.3); color: ${exploitabilityColor}; border: 1px solid ${exploitabilityColor};"><i class="fas fa-bug" style="font-size: 0.65rem; margin-right: 3px;"></i>${item.exploitability}</span>` : '';
+
+            const endpointHtml = item.endpoint ? `<div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 6px; word-break: break-all;"><strong style="color: var(--text-primary);"><i class="fas fa-link" style="font-size: 0.7rem; margin-right: 4px;"></i>Endpoint:</strong> <code style="background: rgba(0,0,0,0.3); padding: 2px 5px; border-radius: 4px; color: var(--text-primary);">${item.endpoint}</code></div>` : '';
+
+            let evidenceHtml = '';
+            if (item.evidence && Object.keys(item.evidence).length > 0) {
+                const evPairs = Object.entries(item.evidence).map(([k, v]) => `<span style="display: inline-block; background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 6px; margin-top: 4px; border: 1px solid rgba(255,255,255,0.05);"><strong style="color: var(--text-secondary);">${k}:</strong> <span style="color: var(--text-primary);">${v}</span></span>`).join('');
+                evidenceHtml = `<div style="font-size: 0.78rem; margin-top: 6px;"><strong style="color: var(--text-primary);"><i class="fas fa-search" style="font-size: 0.7rem; margin-right: 4px;"></i>Evidence:</strong> <div style="display: flex; flex-wrap: wrap; gap: 2px;">${evPairs}</div></div>`;
+            }
+
             return `
-                <div class="cors-finding-item" style="padding: 10px; border-radius: 8px; background: rgba(0, 0, 0, 0.25); margin-bottom: 8px; border-left: 3px solid ${itemColor};">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                        <strong style="color: var(--text-primary); font-size: 0.9rem;">${item.issue}</strong>
-                        <span style="font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; background: rgba(0,0,0,0.4); color: ${itemColor}; border: 1px solid ${itemColor};">${sev}</span>
+                <div class="cors-finding-item" style="padding: 12px; border-radius: 8px; background: rgba(0, 0, 0, 0.25); margin-bottom: 10px; border-left: 3px solid ${itemColor}; border-top: 1px solid rgba(255,255,255,0.03); border-right: 1px solid rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.03);">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; flex-wrap: wrap; margin-bottom: 6px;">
+                        <strong style="color: var(--text-primary); font-size: 0.9rem; flex: 1; min-width: 200px;">${item.issue}</strong>
+                        <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                            ${confidence}
+                            ${exploitability}
+                            <span style="font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; background: rgba(0,0,0,0.4); color: ${itemColor}; border: 1px solid ${itemColor};">${sev}</span>
+                        </div>
                     </div>
-                    <p style="color: var(--text-secondary); font-size: 0.82rem; margin: 0; line-height: 1.4;">${item.detail}</p>
+                    <p style="color: var(--text-secondary); font-size: 0.82rem; margin: 0 0 4px 0; line-height: 1.4;">${item.detail}</p>
+                    ${endpointHtml}
+                    ${evidenceHtml}
                 </div>
             `;
         }).join('');
     } else {
         contentHtml = `<div style="color: var(--success); padding: 4px 0;"><i class="fas fa-check-circle"></i> No CORS misconfiguration detected.</div>`;
+    }
+
+    if (corsData.remediation && corsData.remediation.length > 0) {
+        const remediationItems = corsData.remediation.map(tip => `<li style="margin-bottom: 4px;">${tip}</li>`).join('');
+        contentHtml += `
+            <div style="margin-top: 14px; padding: 10px 12px; border-radius: 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                <strong style="color: var(--text-primary); font-size: 0.85rem; display: block; margin-bottom: 6px;"><i class="fas fa-lightbulb" style="color: var(--warning); margin-right: 6px;"></i> Remediation Guidance:</strong>
+                <ul style="color: var(--text-secondary); font-size: 0.8rem; margin: 0; padding-left: 18px; line-height: 1.4;">
+                    ${remediationItems}
+                </ul>
+            </div>
+        `;
     }
 
     if (findingsContainer) findingsContainer.innerHTML = contentHtml;
