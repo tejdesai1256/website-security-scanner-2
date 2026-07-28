@@ -55,6 +55,10 @@ def format_scan_context(scan_results: dict) -> str:
     seo = scans.get("seo", {})
     tech = scans.get("technology", {})
 
+    cors = scans.get("cors", {})
+    cors_risk = cors.get("risk_level", "LOW") if cors.get("success") else "N/A"
+    cors_findings_count = len(cors.get("findings", [])) if cors.get("success") else 0
+
     ssl_status = "Enabled" if ssl.get("ssl_enabled") else "Disabled"
     missing_headers = headers.get("missing_headers", [])
     open_ports = [f"Port {p.get('port')} ({p.get('service')})" for p in ports.get("open_ports", [])]
@@ -91,6 +95,7 @@ Risk Level: {risk}
 SSL/TLS: {ssl_status} (Protocol: {ssl.get('protocol_version', 'None')}, Issuer: {ssl.get('issuer', 'N/A')}, Expires: {ssl.get('expiry_date', 'N/A')}, Self-Signed: {ssl.get('is_self_signed', False)})
 Open Ports: {', '.join(open_ports) if open_ports else 'None'}
 Missing Security Headers: {', '.join(missing_headers) if missing_headers else 'None'}
+CORS Configuration: Risk Level: {cors_risk}, Total Findings: {cors_findings_count}
 Performance Score: {perf_score}/100
 First Contentful Paint: {perf.get('first_contentful_paint', 'N/A')}
 Largest Contentful Paint: {perf.get('largest_contentful_paint', 'N/A')}
@@ -114,6 +119,18 @@ INTENTS = [
             r"overview.*(?:scan|result)",
             r"tell me about.*(?:scan|report|result)",
             r"analyze.*(?:report|result|scan)",
+        ],
+    },
+    {
+        "name": "explain_cors",
+        "patterns": [
+            r"\bcors\b",
+            r"cross.origin",
+            r"access.control.allow.origin",
+            r"what is cors",
+            r"explain.*cors",
+            r"cors.*misconfig",
+            r"cors.*vulnerab",
         ],
     },
     {
@@ -505,6 +522,28 @@ Your website scored **{score}/100** with a **{risk}** risk level.
 {recs_str}
 
 > 💡 Ask me about any specific finding for a detailed explanation and fix guide!"""
+
+    # -------------------------------------------------------------------------
+    elif intent == "explain_cors":
+        cors_info = ""
+        if scan_results:
+            cors_scans = scan_results.get("scans", {}).get("cors", {})
+            c_risk = cors_scans.get("risk_level", "LOW")
+            c_findings = cors_scans.get("findings", [])
+            cors_info = f"\n\n> 🌐 **Your website scan:** CORS Risk Level is **{c_risk}** with {len(c_findings)} detected finding(s)."
+
+        return f"""### 🌐 CORS (Cross-Origin Resource Sharing) Explained
+
+**CORS** is a browser security mechanism enforced via HTTP headers that controls whether a web page hosted at one domain can make requests and read responses from a different domain.
+
+#### Standard CORS Risk Levels & Evidence:
+- **INFO / LOW**: Permissive CORS on public/non-sensitive data (e.g. `Access-Control-Allow-Origin: *` without credentials).
+- **MEDIUM**: Arbitrary origin reflected without credentials, missing `Vary: Origin` header alongside dynamic reflection, or invalid header specs.
+- **HIGH**: Arbitrary or lookalike origin accepted with `Access-Control-Allow-Credentials: true` enabled.
+- **CRITICAL**: Attacker-controlled origin accepted with credentials AND verified sensitive authenticated user data in the response payload.
+
+#### 🗣️ Nuanced Distinction:
+> A server accepting requests from an untrusted origin is a **CORS configuration weakness**. It only becomes a **confirmed exploitable vulnerability** when authenticated user credentials (like session cookies) are allowed AND private/authenticated response data is actually exposed.{cors_info}"""
 
     # -------------------------------------------------------------------------
     elif intent == "explain_ssl":

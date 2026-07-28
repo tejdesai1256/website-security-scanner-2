@@ -13,7 +13,10 @@ from services.scoring_service import calculate_score
 from scanners.seo_scanner import scan_seo
 from scanners.performance_scanner import scan_performance
 from scanners.cors_scanner import scan_cors
+from scanners.exposed_paths_scanner import scan_exposed_paths
 from services.ai_service import get_ai_response
+
+import os
 
 app = FastAPI()
 
@@ -21,14 +24,26 @@ app = FastAPI()
 from fastapi.staticfiles import StaticFiles
 app.mount("/static", StaticFiles(directory="../frontend"), name="static")
 
-# CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Environment-based CORS configuration (uses ALLOWED_ORIGINS in production, allows dev origins locally)
+allowed_origins_env = os.getenv("ALLOWED_ORIGINS") or os.getenv("PRODUCTION_ORIGIN")
+if allowed_origins_env:
+    allowed_origins = [o.strip() for o in allowed_origins_env.split(",") if o.strip()]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=allowed_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    # Development default: allow all origins so local testing & file:// browsing never break
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 # Request models
 class ScanRequest(BaseModel):
@@ -156,6 +171,7 @@ def scan_website(data: ScanRequest):
         performance_result = scan_performance(target_url)
         info_result = scan_info(target_url)
         cors_result = scan_cors(target_url)
+        exposed_paths_result = scan_exposed_paths(target_url)
 
         score_result = calculate_score(
             headers_result,
@@ -165,6 +181,7 @@ def scan_website(data: ScanRequest):
             performance_result,
             dns_result,
             cors_result,
+            exposed_paths=exposed_paths_result
         )
 
         human_summary = generate_human_summary(
@@ -194,7 +211,8 @@ def scan_website(data: ScanRequest):
                 "dns": dns_result,
                 "performance": performance_result,
                 "technology": technology_result,
-                "cors": cors_result
+                "cors": cors_result,
+                "exposed_paths": exposed_paths_result
             }
         }
     except Exception as e:

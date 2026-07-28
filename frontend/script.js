@@ -427,6 +427,7 @@ else{
         populatePortsDetails(data.scans.ports);
         populateHeadersDetails(data.scans.headers);
         populateCorsDetails(data.scans.cors);
+        populateExposedPathsDetails(data.scans.exposed_paths);
 
         // Reset button
         scanBtn.innerHTML =
@@ -577,7 +578,13 @@ SEO ANALYSIS:
 
 CORS CONFIGURATION:
 - Risk Level: ${data?.scans?.cors?.risk_level || 'LOW'}
-- Findings: ${data?.scans?.cors?.findings ? data.scans.cors.findings.map(f => `[${f.severity}] ${f.issue}: ${f.detail}`).join('; ') : 'None'}
+- Tests Performed: ${data?.scans?.cors?.tests_performed ? data.scans.cors.tests_performed.join(', ') : 'N/A'}
+- Findings: ${data?.scans?.cors?.findings ? data.scans.cors.findings.map(f => `[${f.severity}/${f.confidence || '-'}] ${f.title || f.issue}${f.exploitability ? ' (Exploitability: ' + f.exploitability + ')' : ''}${f.impact ? ' — Impact: ' + f.impact : ''}`).join('; ') : 'None'}
+
+EXPOSED SENSITIVE FILES:
+- Risk Level: ${data?.scans?.exposed_paths?.risk_level || 'LOW'}
+- Exposed Files: ${data?.scans?.exposed_paths?.exposed_count !== undefined ? `${data.scans.exposed_paths.exposed_count} of ${data.scans.exposed_paths.total_checked}` : 'N/A'}
+- Findings: ${data?.scans?.exposed_paths?.exposed_paths && data.scans.exposed_paths.exposed_paths.length > 0 ? data.scans.exposed_paths.exposed_paths.map(f => `[${f.severity}] ${f.path} - ${f.description}`).join('; ') : 'None'}
 
 RECOMMENDATIONS:
 ${Array.from(document.querySelectorAll('#recommendationsList li')).map(li => `- ${li.textContent}`).join('\n') || 'None'}
@@ -1223,22 +1230,38 @@ function populateCorsDetails(corsData) {
     const findings = corsData.findings || [];
     let contentHtml = '';
 
+    // Human-friendly summary block
+    const summaryText = corsData.summary || '';
+    if (summaryText) {
+        contentHtml += `<div style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 12px; padding: 8px 10px; border-radius: 6px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);"><i class="fas fa-info-circle" style="color: var(--primary); margin-right: 6px;"></i>${summaryText}</div>`;
+    }
+
     if (findings.length > 0) {
-        contentHtml = findings.map(item => {
+        contentHtml += findings.map(item => {
             const sev = (item.severity || 'INFO').toUpperCase();
             let itemColor = 'var(--primary)';
             if (sev === 'CRITICAL' || sev === 'HIGH') itemColor = 'var(--danger)';
             else if (sev === 'MEDIUM') itemColor = 'var(--warning)';
-            else if (sev === 'INFO') itemColor = 'var(--success)';
+            else if (sev === 'INFO' || sev === 'LOW') itemColor = 'var(--success)';
 
             const confidence = item.confidence ? `<span style="font-size: 0.7rem; font-weight: 600; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.06); color: var(--text-secondary);"><i class="fas fa-shield-alt" style="font-size: 0.65rem; margin-right: 3px;"></i>${item.confidence}</span>` : '';
-            
+
+            // Map new exploitability enum values to colors
             let exploitabilityColor = 'var(--text-secondary)';
-            if (item.exploitability === 'Confirmed') exploitabilityColor = 'var(--danger)';
-            else if (item.exploitability === 'Potential') exploitabilityColor = 'var(--warning)';
-            else if (item.exploitability === 'None') exploitabilityColor = 'var(--success)';
-            
-            const exploitability = item.exploitability ? `<span style="font-size: 0.7rem; font-weight: 600; padding: 2px 6px; border-radius: 4px; background: rgba(0,0,0,0.3); color: ${exploitabilityColor}; border: 1px solid ${exploitabilityColor};"><i class="fas fa-bug" style="font-size: 0.65rem; margin-right: 3px;"></i>${item.exploitability}</span>` : '';
+            let exploitabilityLabel = item.exploitability || '';
+            if (exploitabilityLabel === 'CONFIRMED_POLICY_WEAKNESS') { exploitabilityColor = 'var(--danger)'; exploitabilityLabel = 'Confirmed'; }
+            else if (exploitabilityLabel === 'LIKELY') { exploitabilityColor = '#ff6b35'; exploitabilityLabel = 'Likely'; }
+            else if (exploitabilityLabel === 'POTENTIAL') { exploitabilityColor = 'var(--warning)'; exploitabilityLabel = 'Potential'; }
+            else if (exploitabilityLabel === 'NOT_CONFIRMED') { exploitabilityColor = 'var(--success)'; exploitabilityLabel = 'Not Confirmed'; }
+            // Backward compat for old values
+            else if (exploitabilityLabel === 'Confirmed') exploitabilityColor = 'var(--danger)';
+            else if (exploitabilityLabel === 'Potential') exploitabilityColor = 'var(--warning)';
+            else if (exploitabilityLabel === 'None') exploitabilityColor = 'var(--success)';
+
+            const exploitabilityBadge = exploitabilityLabel ? `<span style="font-size: 0.7rem; font-weight: 600; padding: 2px 6px; border-radius: 4px; background: rgba(0,0,0,0.3); color: ${exploitabilityColor}; border: 1px solid ${exploitabilityColor};"><i class="fas fa-bug" style="font-size: 0.65rem; margin-right: 3px;"></i>${exploitabilityLabel}</span>` : '';
+
+            // Use title if available, fall back to issue
+            const displayTitle = item.title || item.issue || 'Finding';
 
             const endpointHtml = item.endpoint ? `<div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 6px; word-break: break-all;"><strong style="color: var(--text-primary);"><i class="fas fa-link" style="font-size: 0.7rem; margin-right: 4px;"></i>Endpoint:</strong> <code style="background: rgba(0,0,0,0.3); padding: 2px 5px; border-radius: 4px; color: var(--text-primary);">${item.endpoint}</code></div>` : '';
 
@@ -1248,24 +1271,35 @@ function populateCorsDetails(corsData) {
                 evidenceHtml = `<div style="font-size: 0.78rem; margin-top: 6px;"><strong style="color: var(--text-primary);"><i class="fas fa-search" style="font-size: 0.7rem; margin-right: 4px;"></i>Evidence:</strong> <div style="display: flex; flex-wrap: wrap; gap: 2px;">${evPairs}</div></div>`;
             }
 
+            // Impact section (new field)
+            const impactHtml = item.impact ? `<div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 6px;"><strong style="color: var(--text-primary);"><i class="fas fa-exclamation-circle" style="font-size: 0.7rem; margin-right: 4px; color: var(--warning);"></i>Why it matters:</strong> ${item.impact}</div>` : '';
+
+            // Per-finding remediation (new field)
+            const fixHtml = item.remediation ? `<div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 6px;"><strong style="color: var(--text-primary);"><i class="fas fa-wrench" style="font-size: 0.7rem; margin-right: 4px; color: var(--primary);"></i>How to fix:</strong> ${item.remediation}</div>` : '';
+
+            // Test type badge (new field)
+            const testTypeBadge = item.test_type ? `<span style="font-size: 0.65rem; font-weight: 500; padding: 1px 5px; border-radius: 3px; background: rgba(255,255,255,0.04); color: var(--text-secondary); margin-left: 4px;">${item.test_type}</span>` : '';
+
             return `
                 <div class="cors-finding-item" style="padding: 12px; border-radius: 8px; background: rgba(0, 0, 0, 0.25); margin-bottom: 10px; border-left: 3px solid ${itemColor}; border-top: 1px solid rgba(255,255,255,0.03); border-right: 1px solid rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.03);">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; flex-wrap: wrap; margin-bottom: 6px;">
-                        <strong style="color: var(--text-primary); font-size: 0.9rem; flex: 1; min-width: 200px;">${item.issue}</strong>
+                        <strong style="color: var(--text-primary); font-size: 0.9rem; flex: 1; min-width: 200px;">${displayTitle}${testTypeBadge}</strong>
                         <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
                             ${confidence}
-                            ${exploitability}
+                            ${exploitabilityBadge}
                             <span style="font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; background: rgba(0,0,0,0.4); color: ${itemColor}; border: 1px solid ${itemColor};">${sev}</span>
                         </div>
                     </div>
-                    <p style="color: var(--text-secondary); font-size: 0.82rem; margin: 0 0 4px 0; line-height: 1.4;">${item.detail}</p>
+                    <p style="color: var(--text-secondary); font-size: 0.82rem; margin: 0 0 4px 0; line-height: 1.4;">${item.issue || item.detail || ''}</p>
                     ${endpointHtml}
                     ${evidenceHtml}
+                    ${impactHtml}
+                    ${fixHtml}
                 </div>
             `;
         }).join('');
     } else {
-        contentHtml = `<div style="color: var(--success); padding: 4px 0;"><i class="fas fa-check-circle"></i> No CORS misconfiguration detected.</div>`;
+        contentHtml += `<div style="color: var(--success); padding: 4px 0;"><i class="fas fa-check-circle"></i> No CORS misconfiguration detected.</div>`;
     }
 
     if (corsData.remediation && corsData.remediation.length > 0) {
@@ -1280,11 +1314,118 @@ function populateCorsDetails(corsData) {
         `;
     }
 
+    // Show tests performed and endpoints tested if available
+    const testsPerformed = corsData.tests_performed || [];
+    const endpointsTested = corsData.endpoints_tested || [];
+    if (testsPerformed.length > 0 || endpointsTested.length > 0) {
+        let metaHtml = '<div style="margin-top: 12px; padding: 8px 10px; border-radius: 6px; background: rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.04); font-size: 0.75rem; color: var(--text-secondary);">';
+        if (testsPerformed.length > 0) {
+            metaHtml += `<div style="margin-bottom: 4px;"><strong style="color: var(--text-primary);"><i class="fas fa-vial" style="font-size: 0.65rem; margin-right: 4px;"></i>Tests performed:</strong> ${testsPerformed.join(', ')}</div>`;
+        }
+        if (endpointsTested.length > 0) {
+            metaHtml += `<div><strong style="color: var(--text-primary);"><i class="fas fa-sitemap" style="font-size: 0.65rem; margin-right: 4px;"></i>Endpoints tested:</strong> ${endpointsTested.length} endpoint(s)</div>`;
+        }
+        metaHtml += '</div>';
+        contentHtml += metaHtml;
+    }
+
     if (findingsContainer) findingsContainer.innerHTML = contentHtml;
     if (dashFindingsContainer) dashFindingsContainer.innerHTML = contentHtml;
 }
 
 const renderCorsResult = populateCorsDetails;
+
+function populateExposedPathsDetails(exposedPathsData) {
+    const riskBadgeContainer = document.getElementById('exposedPathsRiskBadge');
+    const dashRiskBadgeContainer = document.getElementById('dashboardExposedPathsRiskBadge');
+    const findingsContainer = document.getElementById('exposedPathsFindingsList');
+    const dashFindingsContainer = document.getElementById('dashExposedPathsFindingsList');
+
+    if (!exposedPathsData || exposedPathsData.success === false) {
+        const errorMsg = exposedPathsData?.error || 'Exposed paths check unavailable';
+        const fallbackHtml = `<div style="color: var(--text-secondary); opacity: 0.8; padding: 6px 0;"><i class="fas fa-exclamation-triangle" style="color: var(--warning); margin-right: 6px;"></i> Exposed paths check unavailable: ${errorMsg}</div>`;
+        if (findingsContainer) findingsContainer.innerHTML = fallbackHtml;
+        if (dashFindingsContainer) dashFindingsContainer.innerHTML = fallbackHtml;
+        if (riskBadgeContainer) riskBadgeContainer.innerHTML = `<span class="badge risk-medium" style="padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 0.8rem; background: rgba(0,0,0,0.3); color: var(--warning); border: 1px solid var(--warning);">N/A</span>`;
+        if (dashRiskBadgeContainer) dashRiskBadgeContainer.innerHTML = `<span class="badge risk-medium" style="padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 0.8rem; background: rgba(0,0,0,0.3); color: var(--warning); border: 1px solid var(--warning);">N/A</span>`;
+        return;
+    }
+
+    const riskLevel = (exposedPathsData.risk_level || 'LOW').toUpperCase();
+    let badgeClass = 'risk-low';
+    let badgeColor = 'var(--success)';
+    if (riskLevel === 'CRITICAL') {
+        badgeClass = 'risk-critical';
+        badgeColor = 'var(--danger)';
+    } else if (riskLevel === 'HIGH') {
+        badgeClass = 'risk-high';
+        badgeColor = 'var(--danger)';
+    } else if (riskLevel === 'MEDIUM') {
+        badgeClass = 'risk-medium';
+        badgeColor = 'var(--warning)';
+    }
+
+    const badgeHtml = `<span class="badge ${badgeClass}" style="padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 0.8rem; background: rgba(0,0,0,0.3); color: ${badgeColor}; border: 1px solid ${badgeColor};">${riskLevel}</span>`;
+
+    if (riskBadgeContainer) riskBadgeContainer.innerHTML = badgeHtml;
+    if (dashRiskBadgeContainer) dashRiskBadgeContainer.innerHTML = badgeHtml;
+
+    let contentHtml = '';
+
+    // Baseline note info banner if SPA / always 200 router detected
+    if (exposedPathsData.baseline_note) {
+        contentHtml += `<div class="baseline-note-banner" style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 12px; padding: 8px 10px; border-radius: 6px; background: rgba(0,212,255,0.06); border: 1px solid rgba(0,212,255,0.2);"><i class="fas fa-info-circle" style="color: var(--primary); margin-right: 6px;"></i>${exposedPathsData.baseline_note}</div>`;
+    }
+
+    // Summary line: e.g. "2 of 22 sensitive paths exposed"
+    const totalChecked = exposedPathsData.total_checked || 0;
+    const exposedCount = exposedPathsData.exposed_count || 0;
+    contentHtml += `<div style="font-size: 0.88rem; color: var(--text-primary); font-weight: 600; margin-bottom: 10px;"><i class="fas fa-search" style="color: var(--primary); margin-right: 6px;"></i>${exposedCount} of ${totalChecked} sensitive paths exposed</div>`;
+
+    // List each entry in exposed_paths showing path, severity badge, and description
+    const exposedPaths = exposedPathsData.exposed_paths || [];
+    if (exposedPaths.length > 0) {
+        contentHtml += exposedPaths.map(item => {
+            const sev = (item.severity || 'LOW').toUpperCase();
+            let itemColor = 'var(--primary)';
+            if (sev === 'CRITICAL' || sev === 'HIGH') itemColor = 'var(--danger)';
+            else if (sev === 'MEDIUM') itemColor = 'var(--warning)';
+            else if (sev === 'LOW' || sev === 'INFO') itemColor = 'var(--success)';
+
+            const pathUrl = item.url ? `<a href="${item.url}" target="_blank" rel="noopener noreferrer" style="color: var(--primary); font-family: monospace; font-size: 0.85rem; text-decoration: underline;">${item.path}</a>` : `<code style="font-family: monospace; font-size: 0.85rem;">${item.path}</code>`;
+            const lengthInfo = item.content_length !== null && item.content_length !== undefined ? `<span style="font-size: 0.72rem; opacity: 0.7; margin-left: 8px;">(${item.content_length} bytes)</span>` : '';
+
+            return `
+                <div class="exposed-path-item" style="padding: 10px 12px; border-radius: 8px; background: rgba(0, 0, 0, 0.25); margin-bottom: 8px; border-left: 3px solid ${itemColor}; border-top: 1px solid rgba(255,255,255,0.03); border-right: 1px solid rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.03);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px;">
+                        <span style="font-weight: 600;">${pathUrl} ${lengthInfo}</span>
+                        <span style="font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; background: rgba(0,0,0,0.4); color: ${itemColor}; border: 1px solid ${itemColor};">${sev}</span>
+                    </div>
+                    <p style="color: var(--text-secondary); font-size: 0.82rem; margin: 0; line-height: 1.4;">${item.description || ''}</p>
+                </div>
+            `;
+        }).join('');
+    } else {
+        contentHtml += `<div style="color: var(--success); padding: 4px 0;"><i class="fas fa-check-circle"></i> No common sensitive paths were found exposed on this server.</div>`;
+    }
+
+    // Protected paths as a collapsed/secondary "✓ Protected" list
+    const protectedPaths = exposedPathsData.protected_paths || [];
+    if (protectedPaths.length > 0) {
+        const protectedItemsHtml = protectedPaths.map(p => `<span style="display: inline-block; background: rgba(0,255,136,0.08); color: var(--success); border: 1px solid rgba(0,255,136,0.2); padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; margin-right: 6px; margin-top: 4px; font-family: monospace;">✓ ${p.path} (${p.status_code})</span>`).join('');
+        contentHtml += `
+            <div class="protected-paths-section" style="margin-top: 14px; padding: 10px 12px; border-radius: 8px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);">
+                <strong style="color: var(--text-primary); font-size: 0.85rem; display: block; margin-bottom: 6px;"><i class="fas fa-shield-alt" style="color: var(--success); margin-right: 6px;"></i> Protected Paths (${protectedPaths.length}):</strong>
+                <div style="display: flex; flex-wrap: wrap; gap: 2px;">${protectedItemsHtml}</div>
+            </div>
+        `;
+    }
+
+    if (findingsContainer) findingsContainer.innerHTML = contentHtml;
+    if (dashFindingsContainer) dashFindingsContainer.innerHTML = contentHtml;
+}
+
+const renderExposedPathsResult = populateExposedPathsDetails;
 
 
 // ==========================================
@@ -1709,6 +1850,12 @@ const MODULE_SUGGESTIONS = {
         'What is arbitrary origin reflection?',
         'Why is null origin unsafe?',
         'How to fix Access-Control-Allow-Origin'
+    ],
+    exposed_paths: [
+        'Explain exposed sensitive paths',
+        'How to block access to .env file',
+        'Why git config exposure is critical',
+        'How to secure backup files on web server'
     ]
 };
 
@@ -1733,6 +1880,8 @@ function autoDetectActiveModule() {
         headersDetails: 'headers',
         corsDetails:    'cors',
         dashCorsDetails:'cors',
+        exposedPathsDetails:     'exposed_paths',
+        dashExposedPathsDetails: 'exposed_paths',
         portsDetails:   'ports',
         dnsDetails:     'dns',
         seoDetails:     'seo',
@@ -1749,11 +1898,12 @@ function autoDetectActiveModule() {
         { selector: '.ssl-card',         module: 'ssl'         },
         { selector: '.headers-card',     module: 'headers'     },
         { selector: '.cors-card',        module: 'cors'        },
+        { selector: '.exposed-paths-card', module: 'exposed_paths' },
         { selector: '.port-card',        module: 'ports'       },
         { selector: '.dns-card',         module: 'dns'         },
         { selector: '.seo-card',         module: 'seo'         },
         { selector: '.performance-card', module: 'performance' },
-        { selector: '.result-card:not(.ssl-card):not(.headers-card):not(.cors-card):not(.port-card):not(.dns-card):not(.seo-card):not(.performance-card)', module: 'technology' }
+        { selector: '.result-card:not(.ssl-card):not(.headers-card):not(.cors-card):not(.exposed-paths-card):not(.port-card):not(.dns-card):not(.seo-card):not(.performance-card)', module: 'technology' }
     ];
     const vMid = window.innerHeight / 2;
     let bestMod = 'general', bestDist = Infinity;

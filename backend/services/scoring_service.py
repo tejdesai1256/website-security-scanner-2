@@ -1,4 +1,4 @@
-def calculate_score(headers, ssl_data, ports, seo=None, performance=None, dns=None, cors=None):
+def calculate_score(headers, ssl_data, ports, seo=None, performance=None, dns=None, cors=None, exposed_paths=None):
     try:
         headers = headers or {}
         ssl_data = ssl_data or {}
@@ -83,17 +83,48 @@ def calculate_score(headers, ssl_data, ports, seo=None, performance=None, dns=No
                 score -= 10
 
         # =========================
-        # CORS CHECKS
+        # CORS CHECKS (dedup-aware: penalize by highest unique root-cause severity)
         # =========================
         if cors and cors.get("success"):
-            cors_risk = cors.get("risk_level", "LOW")
+            cors_findings = cors.get("findings", [])
+            # Collect unique root-cause severity levels (avoid double-counting)
+            unique_severities = set()
+            for finding in cors_findings:
+                sev = (finding.get("severity") or "INFO").upper()
+                if sev not in ("INFO",):
+                    unique_severities.add(sev)
+
+            # Apply penalty based on the single highest unique CORS severity
             CORS_PENALTIES = {"CRITICAL": 25, "HIGH": 15, "MEDIUM": 5, "LOW": 0}
-            penalty = CORS_PENALTIES.get(cors_risk, 0)
-            if penalty > 0:
+            max_penalty = 0
+            max_sev = "LOW"
+            for sev in unique_severities:
+                p = CORS_PENALTIES.get(sev, 0)
+                if p > max_penalty:
+                    max_penalty = p
+                    max_sev = sev
+
+            if max_penalty > 0:
+                score -= max_penalty
+                recommendations.append(
+                    f"CORS misconfiguration detected ({max_sev.lower()} risk) — restrict "
+                    f"Access-Control-Allow-Origin to a trusted allowlist"
+                )
+
+        # =========================
+        # EXPOSED SENSITIVE PATHS CHECKS
+        # =========================
+        if exposed_paths and exposed_paths.get("success"):
+            EXPOSED_PATH_PENALTIES = {"CRITICAL": 30, "HIGH": 15, "MEDIUM": 5, "LOW": 2}
+            for finding in exposed_paths.get("exposed_paths", []):
+                sev = finding.get("severity", "LOW")
+                if sev == "INFO":
+                    continue
+                penalty = EXPOSED_PATH_PENALTIES.get(sev, 0)
                 score -= penalty
                 recommendations.append(
-                    f"CORS misconfiguration detected ({cors_risk.lower()} risk) — restrict "
-                    f"Access-Control-Allow-Origin to a trusted allowlist"
+                    f"Sensitive file exposed at {finding.get('path')} ({sev.lower()} risk) — "
+                    f"restrict access or remove it from the public web root"
                 )
 
         # =========================

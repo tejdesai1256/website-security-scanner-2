@@ -276,6 +276,35 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Exposed Sensitive Paths Card -->
+                    <div class="result-card exposed-paths-card">
+                        <div class="card-header">
+                            <i class="fas fa-folder-minus"></i>
+                            <h3>Exposed Sensitive Files</h3>
+                        </div>
+                        <p class="card-subtitle" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">Checks for accidentally exposed config files, backups, and credentials on the server.</p>
+                        <div class="card-content">
+                            <div class="result-item">
+                                <span class="label">Risk Level:</span>
+                                <span class="value" id="dashboardExposedPathsRiskBadge"><span class="badge risk-low" style="padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 0.8rem; background: rgba(0,0,0,0.3); color: var(--success); border: 1px solid var(--success);">LOW</span></span>
+                            </div>
+                            <div class="card-expand-toggle">
+                                <button class="expand-btn" onclick="toggleCardDetails('dashExposedPathsDetails', this)">
+                                    <i class="fas fa-chevron-down"></i> <span>View Full Details</span>
+                                </button>
+                            </div>
+                            <div class="card-expanded-details" id="dashExposedPathsDetails">
+                                <div class="detail-row"
+                                    style="flex-direction: column; align-items: flex-start; gap: 4px; border-bottom: none;">
+                                    <span class="label">Exposed Paths Findings:</span>
+                                    <div id="dashExposedPathsFindingsList"
+                                        style="width: 100%; font-size: 0.85rem; line-height: 1.4; margin-top: 5px;">
+                                        -</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Chatbot card removed and moved to floating widget -->
