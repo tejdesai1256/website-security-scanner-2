@@ -1383,6 +1383,27 @@ function populateExposedPathsDetails(exposedPathsData) {
     if (riskBadgeContainer) riskBadgeContainer.innerHTML = badgeHtml;
     if (dashRiskBadgeContainer) dashRiskBadgeContainer.innerHTML = badgeHtml;
 
+    // Populate card-face stats (visible without expanding)
+    const totalChecked = exposedPathsData.total_checked || 0;
+    const exposedCount = exposedPathsData.exposed_count || 0;
+    const protectedCount = (exposedPathsData.protected_paths || []).length;
+
+    // index.html elements
+    const elChecked = document.getElementById('exposedPathsChecked');
+    const elExposed = document.getElementById('exposedPathsExposedCount');
+    const elProtected = document.getElementById('exposedPathsProtectedCount');
+    if (elChecked) elChecked.textContent = totalChecked;
+    if (elExposed) elExposed.textContent = exposedCount;
+    if (elProtected) elProtected.textContent = protectedCount;
+
+    // dashboard.html elements
+    const dashElChecked = document.getElementById('dashExposedPathsChecked');
+    const dashElExposed = document.getElementById('dashExposedPathsExposedCount');
+    const dashElProtected = document.getElementById('dashExposedPathsProtectedCount');
+    if (dashElChecked) dashElChecked.textContent = totalChecked;
+    if (dashElExposed) dashElExposed.textContent = exposedCount;
+    if (dashElProtected) dashElProtected.textContent = protectedCount;
+
     let contentHtml = '';
 
     // Baseline note info banner if SPA / always 200 router detected
@@ -1391,8 +1412,6 @@ function populateExposedPathsDetails(exposedPathsData) {
     }
 
     // Summary line: e.g. "2 of 22 sensitive paths exposed"
-    const totalChecked = exposedPathsData.total_checked || 0;
-    const exposedCount = exposedPathsData.exposed_count || 0;
     contentHtml += `<div style="font-size: 0.88rem; color: var(--text-primary); font-weight: 600; margin-bottom: 10px;"><i class="fas fa-search" style="color: var(--primary); margin-right: 6px;"></i>${exposedCount} of ${totalChecked} sensitive paths exposed</div>`;
 
     // List each entry in exposed_paths showing path, severity badge, and description
