@@ -31,6 +31,7 @@ SENSITIVE_PATHS = {
 
 MAX_WORKERS = 10
 REQUEST_TIMEOUT = 5
+MAX_BODY_BYTES = 8192
 
 
 def _get_baseline(base_url):
@@ -45,11 +46,34 @@ def _get_baseline(base_url):
             base_url.rstrip("/") + random_path,
             timeout=REQUEST_TIMEOUT,
             allow_redirects=False,
+            stream=True,
             headers={"User-Agent": "Mozilla/5.0 (Website-Security-Scanner Path-Check)"}
         )
+        body = bytearray()
+        try:
+            for chunk in response.iter_content(chunk_size=1024):
+                if not chunk:
+                    continue
+                body.extend(chunk)
+                if len(body) >= MAX_BODY_BYTES:
+                    break
+        finally:
+            response.close()
+
+        bytes_read = len(body)
+        header_length = None
+        cl_header = response.headers.get("Content-Length")
+        if cl_header:
+            try:
+                header_length = int(cl_header)
+            except ValueError:
+                header_length = None
+
+        content_length = header_length if header_length is not None else bytes_read
+
         return {
             "status_code": response.status_code,
-            "content_length": len(response.content),
+            "content_length": content_length,
             "always_returns_200": response.status_code == 200
         }
     except Exception:
@@ -64,10 +88,34 @@ def _check_path(base_url, path, description, severity, baseline):
             full_url,
             timeout=REQUEST_TIMEOUT,
             allow_redirects=False,
+            stream=True,
             headers={"User-Agent": "Mozilla/5.0 (Website-Security-Scanner Path-Check)"}
         )
+        body = bytearray()
+        stopped_early = False
+        try:
+            for chunk in response.iter_content(chunk_size=1024):
+                if not chunk:
+                    continue
+                body.extend(chunk)
+                if len(body) >= MAX_BODY_BYTES:
+                    stopped_early = True
+                    break
+        finally:
+            response.close()
+
         status = response.status_code
-        content_length = len(response.content)
+        bytes_read = len(body)
+        header_length = None
+        cl_header = response.headers.get("Content-Length")
+        if cl_header:
+            try:
+                header_length = int(cl_header)
+            except ValueError:
+                header_length = None
+
+        content_length = header_length if header_length is not None else bytes_read
+        content_truncated = stopped_early or (header_length is not None and header_length > MAX_BODY_BYTES)
 
         if status == 200:
             # Guard against false positives: if the site returns 200 for literally any
@@ -98,18 +146,19 @@ def _check_path(base_url, path, description, severity, baseline):
             "state": state,
             "description": description,
             "severity": severity if state == "EXPOSED" else "INFO",
-            "content_length": content_length if state == "EXPOSED" else None
+            "content_length": content_length if state == "EXPOSED" else None,
+            "content_truncated": content_truncated if state == "EXPOSED" else False
         }
 
     except requests.exceptions.Timeout:
         return {"path": path, "url": full_url, "status_code": None, "state": "TIMEOUT",
-                "description": description, "severity": "INFO", "content_length": None}
+                "description": description, "severity": "INFO", "content_length": None, "content_truncated": False}
     except requests.exceptions.ConnectionError:
         return {"path": path, "url": full_url, "status_code": None, "state": "CONNECTION_ERROR",
-                "description": description, "severity": "INFO", "content_length": None}
+                "description": description, "severity": "INFO", "content_length": None, "content_truncated": False}
     except Exception as e:
         return {"path": path, "url": full_url, "status_code": None, "state": "ERROR",
-                "description": description, "severity": "INFO", "content_length": None, "error": str(e)}
+                "description": description, "severity": "INFO", "content_length": None, "content_truncated": False, "error": str(e)}
 
 
 def scan_exposed_paths(url):

@@ -1329,6 +1329,19 @@ function populateCorsDetails(corsData) {
         contentHtml += metaHtml;
     }
 
+    // Show CORS header descriptions reference if available
+    const headerDescs = corsData.cors_header_descriptions || {};
+    const headerDescEntries = Object.entries(headerDescs);
+    if (headerDescEntries.length > 0) {
+        const descItems = headerDescEntries.map(([header, desc]) => `<div style="margin-bottom: 4px;"><code style="color: var(--primary); font-family: monospace; font-size: 0.78rem;">${header}:</code> <span style="color: var(--text-secondary); font-size: 0.78rem;">${desc}</span></div>`).join('');
+        contentHtml += `
+            <div class="cors-headers-reference-section" style="margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);">
+                <strong style="color: var(--text-primary); font-size: 0.85rem; display: block; margin-bottom: 6px;"><i class="fas fa-book" style="color: var(--primary); margin-right: 6px;"></i> CORS Header Reference:</strong>
+                <div>${descItems}</div>
+            </div>
+        `;
+    }
+
     if (findingsContainer) findingsContainer.innerHTML = contentHtml;
     if (dashFindingsContainer) dashFindingsContainer.innerHTML = contentHtml;
 }
@@ -1393,7 +1406,7 @@ function populateExposedPathsDetails(exposedPathsData) {
             else if (sev === 'LOW' || sev === 'INFO') itemColor = 'var(--success)';
 
             const pathUrl = item.url ? `<a href="${item.url}" target="_blank" rel="noopener noreferrer" style="color: var(--primary); font-family: monospace; font-size: 0.85rem; text-decoration: underline;">${item.path}</a>` : `<code style="font-family: monospace; font-size: 0.85rem;">${item.path}</code>`;
-            const lengthInfo = item.content_length !== null && item.content_length !== undefined ? `<span style="font-size: 0.72rem; opacity: 0.7; margin-left: 8px;">(${item.content_length} bytes)</span>` : '';
+            const lengthInfo = item.content_length !== null && item.content_length !== undefined ? `<span style="font-size: 0.72rem; opacity: 0.7; margin-left: 8px;">(${item.content_length} bytes${item.content_truncated ? ', response truncated for safety' : ''})</span>` : '';
 
             return `
                 <div class="exposed-path-item" style="padding: 10px 12px; border-radius: 8px; background: rgba(0, 0, 0, 0.25); margin-bottom: 8px; border-left: 3px solid ${itemColor}; border-top: 1px solid rgba(255,255,255,0.03); border-right: 1px solid rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.03);">
