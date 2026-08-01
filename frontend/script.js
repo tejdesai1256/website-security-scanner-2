@@ -1424,16 +1424,26 @@ function populateExposedPathsDetails(exposedPathsData) {
             else if (sev === 'MEDIUM') itemColor = 'var(--warning)';
             else if (sev === 'LOW' || sev === 'INFO') itemColor = 'var(--success)';
 
+            const conf = (item.confidence || '').toUpperCase();
+            let confColor = 'var(--text-secondary)';
+            if (conf === 'HIGH') confColor = 'var(--danger)';
+            else if (conf === 'MEDIUM') confColor = 'var(--warning)';
+            const confBadge = conf ? `<span style="font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; background: rgba(0,0,0,0.4); color: ${confColor}; border: 1px solid ${confColor}; margin-left: 6px;">${conf} CONFIDENCE</span>` : '';
+
             const pathUrl = item.url ? `<a href="${item.url}" target="_blank" rel="noopener noreferrer" style="color: var(--primary); font-family: monospace; font-size: 0.85rem; text-decoration: underline;">${item.path}</a>` : `<code style="font-family: monospace; font-size: 0.85rem;">${item.path}</code>`;
+            const categoryLabel = item.category ? `<span style="font-size: 0.72rem; opacity: 0.7; margin-left: 6px;">[${item.category}]</span>` : '';
             const lengthInfo = item.content_length !== null && item.content_length !== undefined ? `<span style="font-size: 0.72rem; opacity: 0.7; margin-left: 8px;">(${item.content_length} bytes${item.content_truncated ? ', response truncated for safety' : ''})</span>` : '';
+            const dirListingWarning = item.directory_listing_detected ? `<p style="color: var(--warning); font-size: 0.82rem; margin: 4px 0 0 0; line-height: 1.4;"><i class="fas fa-exclamation-triangle" style="margin-right: 4px;"></i> Directory listing is publicly viewable at this path</p>` : '';
 
             return `
                 <div class="exposed-path-item" style="padding: 10px 12px; border-radius: 8px; background: rgba(0, 0, 0, 0.25); margin-bottom: 8px; border-left: 3px solid ${itemColor}; border-top: 1px solid rgba(255,255,255,0.03); border-right: 1px solid rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.03);">
                     <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px;">
-                        <span style="font-weight: 600;">${pathUrl} ${lengthInfo}</span>
-                        <span style="font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; background: rgba(0,0,0,0.4); color: ${itemColor}; border: 1px solid ${itemColor};">${sev}</span>
+                        <span style="font-weight: 600;">${pathUrl}${categoryLabel} ${lengthInfo}</span>
+                        <div>
+                            <span style="font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; background: rgba(0,0,0,0.4); color: ${itemColor}; border: 1px solid ${itemColor};">${sev}</span>${confBadge}
+                        </div>
                     </div>
-                    <p style="color: var(--text-secondary); font-size: 0.82rem; margin: 0; line-height: 1.4;">${item.description || ''}</p>
+                    <p style="color: var(--text-secondary); font-size: 0.82rem; margin: 0; line-height: 1.4;">${item.description || ''}</p>${dirListingWarning}
                 </div>
             `;
         }).join('');
