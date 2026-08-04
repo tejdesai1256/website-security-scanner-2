@@ -203,28 +203,45 @@ console.log("API Response:", data);
         // PORTS
         // =========================
 
-        const openPorts =
-            data.scans.ports.open_ports || [];
+        const portsScan = data.scans?.ports || {};
+        const openPorts = portsScan.open_ports || [];
+        const vulnerablePorts = portsScan.vulnerable_ports || [];
+        const vulnCounts = portsScan.vulnerability_counts || {};
 
-        document.getElementById(
-            'runningServices'
-        ).textContent =
+        document.getElementById('runningServices').textContent =
             openPorts.length > 0
-                ? openPorts
-                    .map(port => port.service)
-                    .join(', ')
+                ? openPorts.map(port => port.service).join(', ')
                 : 'None';
 
-        
-        document.getElementById(
-            'openPorts'
-        ).textContent =
-            (data.scans.ports.open_ports || []).length;
+        document.getElementById('openPorts').textContent = openPorts.length;
+        document.getElementById('vulnerablePorts').textContent = vulnerablePorts.length;
 
-        document.getElementById(
-            'vulnerablePorts'
-        ).textContent =
-            (data.scans.ports.vulnerable_ports || []).length;
+        // Populate vulnerability counts by severity (with client-side fallback)
+        let critCount = vulnCounts.critical;
+        let highCount = vulnCounts.high;
+        let medCount = vulnCounts.medium;
+        let lowCount = vulnCounts.low;
+
+        if (critCount === undefined) {
+            critCount = 0; highCount = 0; medCount = 0; lowCount = 0;
+            openPorts.forEach(p => {
+                const portNum = typeof p === 'object' ? p.port : p;
+                if (portNum === 23) critCount++;
+                else if (portNum === 21 || portNum === 3306) highCount++;
+                else if (portNum === 25 || portNum === 110 || portNum === 143) medCount++;
+                else if (portNum !== 443) lowCount++;
+            });
+        }
+
+        const elCrit = document.getElementById('criticalVuln');
+        const elHigh = document.getElementById('highVuln');
+        const elMed = document.getElementById('mediumVuln');
+        const elLow = document.getElementById('lowVuln');
+
+        if (elCrit) elCrit.textContent = critCount;
+        if (elHigh) elHigh.textContent = highCount;
+        if (elMed) elMed.textContent = medCount;
+        if (elLow) elLow.textContent = lowCount;
 
         // =========================
         // PERFORMANCE
@@ -553,9 +570,13 @@ SSL/TLS CERTIFICATE:
 - Expires: ${document.getElementById('sslExpires').textContent || '-'}
 
 PORT SCAN:
-- Open Ports: ${document.getElementById('openPorts').textContent || '0'}
-- Vulnerable: ${document.getElementById('vulnerablePorts').textContent || '0'}
-- Services: ${document.getElementById('runningServices').textContent || 'None'}
+- Open Ports: ${document.getElementById('openPorts')?.textContent || '0'}
+- Vulnerable: ${document.getElementById('vulnerablePorts')?.textContent || '0'}
+- Critical Vulnerabilities: ${document.getElementById('criticalVuln')?.textContent || '0'}
+- High Vulnerabilities: ${document.getElementById('highVuln')?.textContent || '0'}
+- Medium Vulnerabilities: ${document.getElementById('mediumVuln')?.textContent || '0'}
+- Low Vulnerabilities: ${document.getElementById('lowVuln')?.textContent || '0'}
+- Services: ${document.getElementById('runningServices')?.textContent || 'None'}
 
 DNS INFORMATION:
 - IP Address: ${document.getElementById('dnsIp').textContent || '-'}
@@ -1145,22 +1166,39 @@ function populatePortsDetails(portsData) {
     let hasWarnings = false;
     
     openPorts.forEach(p => {
-        const portNum = p.port;
-        const note = riskNotes[portNum] || riskNotes[String(portNum)];
-        if (note) {
+        const portNum = typeof p === 'object' ? p.port : p;
+        const serviceName = typeof p === 'object' ? p.service : 'Service';
+        const severity = typeof p === 'object' ? (p.severity || 'LOW').toUpperCase() : 'LOW';
+        const note = (typeof p === 'object' && p.note) ? p.note : (riskNotes[portNum] || riskNotes[String(portNum)]);
+        
+        if (note || severity !== 'INFO') {
             hasWarnings = true;
+            let badgeColor = 'var(--primary)';
+            if (severity === 'CRITICAL' || severity === 'HIGH') badgeColor = 'var(--danger)';
+            else if (severity === 'MEDIUM') badgeColor = 'var(--warning)';
+            else if (severity === 'LOW') badgeColor = 'var(--text-secondary)';
+
             const item = document.createElement('div');
-            item.style.padding = '6px 0';
-            item.style.borderBottom = '1px solid rgba(255,255,255,0.03)';
+            item.style.padding = '8px 10px';
+            item.style.marginBottom = '6px';
+            item.style.borderRadius = '6px';
+            item.style.background = 'rgba(0,0,0,0.25)';
+            item.style.borderLeft = `3px solid ${badgeColor}`;
             item.innerHTML = `
-                <strong style="color: var(--danger);">Port ${portNum} (${p.service}):</strong> ${note}
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <strong style="color: var(--text-primary); font-size: 0.85rem;">Port ${portNum} (${serviceName})</strong>
+                    <span style="font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: rgba(0,0,0,0.4); color: ${badgeColor}; border: 1px solid ${badgeColor};">${severity}</span>
+                </div>
+                <div style="color: var(--text-secondary); font-size: 0.8rem; line-height: 1.4;">${note || 'Port is publicly accessible.'}</div>
             `;
             riskDetails.appendChild(item);
         }
     });
     
-    if (!hasWarnings) {
-        riskDetails.innerHTML = '<div style="opacity: 0.6; padding: 4px 0; color: var(--success);"><i class="fas fa-check-circle"></i> No common high-risk open ports detected.</div>';
+    if (!hasWarnings && openPorts.length > 0) {
+        riskDetails.innerHTML = '<div style="opacity: 0.8; padding: 6px 0; color: var(--success);"><i class="fas fa-check-circle"></i> Open ports detected, but no high-risk vulnerabilities identified.</div>';
+    } else if (openPorts.length === 0) {
+        riskDetails.innerHTML = '<div style="opacity: 0.8; padding: 6px 0; color: var(--success);"><i class="fas fa-check-circle"></i> No open ports detected.</div>';
     }
 }
 
