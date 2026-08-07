@@ -3,7 +3,7 @@ import ssl
 from urllib.parse import urlparse
 from datetime import datetime
 
-def scan_ssl(url):
+def scan_ssl(url, pinned_ip=None):
     try:
         if not url.startswith(("http://", "https://")):
             url = "https://" + url
@@ -11,7 +11,7 @@ def scan_ssl(url):
         hostname = urlparse(url).hostname
         context = ssl.create_default_context()
 
-        with socket.create_connection((hostname, 443), timeout=5) as sock:
+        with socket.create_connection((pinned_ip or hostname, 443), timeout=5) as sock:
             with context.wrap_socket(sock, server_hostname=hostname) as ssock:
                 cert = ssock.getpeercert()
                 cipher_name, tls_version, _ = ssock.cipher()

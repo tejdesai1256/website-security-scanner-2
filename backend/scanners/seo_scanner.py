@@ -1,8 +1,8 @@
-import requests
+from services.url_validator import safe_get
 from bs4 import BeautifulSoup
 
 
-def scan_seo(url):
+def scan_seo(url, pinned_ip=None):
 
     try:
 
@@ -11,8 +11,9 @@ def scan_seo(url):
             "Mozilla/5.0"
         }
 
-        response = requests.get(
+        response = safe_get(
             url,
+            pinned_ip=pinned_ip,
             headers=headers,
             timeout=10
         )

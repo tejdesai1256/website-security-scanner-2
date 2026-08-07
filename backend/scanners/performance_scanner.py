@@ -4,12 +4,13 @@ import time
 import re
 
 from dotenv import load_dotenv
+from services.url_validator import safe_get
 
 load_dotenv()
 
 API_KEY = os.getenv("PAGESPEED_API_KEY")
 
-def local_scan_performance(url):
+def local_scan_performance(url, pinned_ip=None):
     try:
         start_time = time.time()
         headers = {
@@ -18,7 +19,7 @@ def local_scan_performance(url):
             "Accept-Language": "en-US,en;q=0.5"
         }
         
-        response = requests.get(url, headers=headers, timeout=10, stream=True)
+        response = safe_get(url, pinned_ip=pinned_ip, headers=headers, timeout=10, stream=True)
         ttfb = time.time() - start_time
         
         content = response.content
@@ -120,7 +121,7 @@ def local_scan_performance(url):
             "error": str(e)
         }
 
-def scan_performance(url):
+def scan_performance(url, pinned_ip=None):
     # Try using Google PageSpeed Insights API first
     try:
         api_url = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed"
@@ -184,8 +185,8 @@ def scan_performance(url):
                 }
 
         # If non-200 code returned, fall back to local scanning
-        return local_scan_performance(url)
+        return local_scan_performance(url, pinned_ip=pinned_ip)
 
     except Exception:
         # Fall back to local scanning on timeout or any other exception
-        return local_scan_performance(url)
+        return local_scan_performance(url, pinned_ip=pinned_ip)

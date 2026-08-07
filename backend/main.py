@@ -183,16 +183,16 @@ def scan_website(data: ScanRequest):
                 "scans": {}
             }
 
-        headers_result = scan_headers(target_url)
-        ssl_result = scan_ssl(target_url)
-        ports_result = scan_ports(target_url)
-        seo_result = scan_seo(target_url)
-        dns_result = scan_dns(target_url)
-        technology_result = scan_technology(target_url)
-        performance_result = scan_performance(target_url)
-        info_result = scan_info(target_url)
-        cors_result = scan_cors(target_url)
-        exposed_paths_result = scan_exposed_paths(target_url)
+        headers_result = scan_headers(target_url, pinned_ip=resolved_ip)
+        ssl_result = scan_ssl(target_url, pinned_ip=resolved_ip)
+        ports_result = scan_ports(target_url, pinned_ip=resolved_ip)
+        seo_result = scan_seo(target_url, pinned_ip=resolved_ip)
+        dns_result = scan_dns(target_url, pinned_ip=resolved_ip)
+        technology_result = scan_technology(target_url, pinned_ip=resolved_ip)
+        performance_result = scan_performance(target_url, pinned_ip=resolved_ip)
+        info_result = scan_info(target_url, pinned_ip=resolved_ip)
+        cors_result = scan_cors(target_url, pinned_ip=resolved_ip)
+        exposed_paths_result = scan_exposed_paths(target_url, pinned_ip=resolved_ip)
 
         score_result = calculate_score(
             headers_result,

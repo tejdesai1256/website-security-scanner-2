@@ -1,9 +1,9 @@
-import requests
+from services.url_validator import safe_get
 
-def scan_headers(url):
+def scan_headers(url, pinned_ip=None):
 
     try:
-        response = requests.get(url, timeout=5)
+        response = safe_get(url, pinned_ip=pinned_ip, timeout=5)
 
         headers = response.headers
 

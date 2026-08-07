@@ -59,3 +59,49 @@ def validate_public_url(url: str) -> tuple[bool, str, str]:
         pass
 
     return True, resolved_ip, ""
+
+
+import requests
+from requests.adapters import HTTPAdapter
+
+
+class PinnedIPAdapter(HTTPAdapter):
+    """
+    Custom HTTPAdapter that overrides the connection target IP address while keeping
+    the original request Host header and TLS SNI hostname. Prevents DNS rebinding TOCTOU gaps.
+    """
+    def __init__(self, pinned_ip: str, *args, **kwargs):
+        self.pinned_ip = pinned_ip
+        super().__init__(*args, **kwargs)
+
+    def get_connection(self, url, proxies=None):
+        parsed = urlparse(url)
+        port = parsed.port or (443 if parsed.scheme == "https" else 80)
+        pinned_url = f"{parsed.scheme}://{self.pinned_ip}:{port}"
+        conn = super().get_connection(pinned_url, proxies=proxies)
+        if parsed.scheme == "https":
+            conn.assert_hostname = parsed.hostname
+            conn.server_hostname = parsed.hostname
+        return conn
+
+
+def safe_request(method: str, url: str, pinned_ip: str = None, **kwargs) -> requests.Response:
+    """
+    Executes an HTTP request. When pinned_ip is provided, mounts PinnedIPAdapter to pin the socket connection IP.
+    """
+    if pinned_ip:
+        session = requests.Session()
+        adapter = PinnedIPAdapter(pinned_ip)
+        session.mount("https://", adapter)
+        session.mount("http://", adapter)
+        return session.request(method, url, **kwargs)
+    else:
+        return requests.request(method, url, **kwargs)
+
+
+def safe_get(url: str, pinned_ip: str = None, **kwargs) -> requests.Response:
+    """
+    Helper function to perform a GET request with optional IP pinning.
+    """
+    return safe_request("GET", url, pinned_ip=pinned_ip, **kwargs)
+

@@ -3,6 +3,7 @@ import requests
 import re
 import json
 from urllib.parse import urlparse, urljoin
+from services.url_validator import safe_get, safe_request
 
 # Set up logging for CORS scanner error handling and diagnostics
 logger = logging.getLogger("cors_scanner")
@@ -76,7 +77,7 @@ def _sanitize_evidence_headers(headers):
     return sanitized
 
 
-def _request_with_origin(url, origin, timeout=5, custom_headers=None):
+def _request_with_origin(url, origin, timeout=5, custom_headers=None, pinned_ip=None):
     """
     Send a GET request with a specified Origin header and return CORS details.
     Safely handles network errors and limits response body size read.
@@ -91,7 +92,7 @@ def _request_with_origin(url, origin, timeout=5, custom_headers=None):
         headers.update(custom_headers)
 
     try:
-        response = requests.get(url, headers=headers, timeout=timeout, allow_redirects=True)
+        response = safe_get(url, pinned_ip=pinned_ip, headers=headers, timeout=timeout, allow_redirects=True)
         content_type = response.headers.get("Content-Type", "")
         
         # Limit text content read to 10KB to avoid memory overhead
@@ -226,7 +227,7 @@ def generate_origin_test_matrix(target_url):
     return matrix, hostname
 
 
-def discover_api_endpoints(target_url, timeout=4):
+def discover_api_endpoints(target_url, timeout=4, pinned_ip=None):
     """
     Safely discover potential API endpoints from HTML links and common paths.
     Respects rate limits, max endpoints (<=8), max timeout, and non-destructive GETs.
@@ -236,7 +237,7 @@ def discover_api_endpoints(target_url, timeout=4):
     base_origin = f"{parsed_base.scheme}://{parsed_base.netloc}"
 
     # Safe GET on root page to extract basic href/src endpoints
-    res = _request_with_origin(target_url, origin=None, timeout=timeout)
+    res = _request_with_origin(target_url, origin=None, timeout=timeout, pinned_ip=pinned_ip)
     if res.get("success") and res.get("text_content"):
         html = res.get("text_content")
         # Extract relative API endpoints like /api/v1/user
@@ -293,7 +294,7 @@ def _build_remediation(findings):
     return unique_tips[:4]
 
 
-def scan_cors(url):
+def scan_cors(url, pinned_ip=None):
     """
     Upgraded, evidence-based CORS Misconfiguration Scanner.
     Non-destructive, accurate, and structured.
@@ -313,7 +314,7 @@ def scan_cors(url):
         # ----------------------------------------------------------------------
         # 1. DISCOVER TARGET ENDPOINTS
         # ----------------------------------------------------------------------
-        endpoints_to_test = discover_api_endpoints(url, timeout=4)
+        endpoints_to_test = discover_api_endpoints(url, timeout=4, pinned_ip=pinned_ip)
         endpoints_tested = endpoints_to_test
 
         # We test primary endpoint first, then sample remaining discovered endpoints
@@ -322,7 +323,7 @@ def scan_cors(url):
         # ----------------------------------------------------------------------
         # 2. ORIGIN MATRIX TESTS ON PRIMARY ENDPOINT
         # ----------------------------------------------------------------------
-        primary_res = _request_with_origin(primary_endpoint, DEFAULT_ATTACKER_ORIGIN, timeout=5)
+        primary_res = _request_with_origin(primary_endpoint, DEFAULT_ATTACKER_ORIGIN, timeout=5, pinned_ip=pinned_ip)
         raw_checks["primary_test"] = primary_res
 
         if not primary_res["success"]:
@@ -464,7 +465,7 @@ def scan_cors(url):
             torigin = test_item["origin"]
             tdesc = test_item["desc"]
 
-            res = _request_with_origin(primary_endpoint, torigin, timeout=4)
+            res = _request_with_origin(primary_endpoint, torigin, timeout=4, pinned_ip=pinned_ip)
             if res.get("success") and res.get("acao") == torigin:
                 acac_flag = (res.get("acac") or "").lower() == "true"
                 has_sens, sens_t, sens_conf = inspect_sensitive_data(res)
@@ -521,7 +522,7 @@ def scan_cors(url):
         # ----------------------------------------------------------------------
         tests_performed.append("Vary: Origin Cache Check")
         res_a = primary_res
-        res_b = _request_with_origin(primary_endpoint, SECONDARY_ATTACKER_ORIGIN, timeout=4)
+        res_b = _request_with_origin(primary_endpoint, SECONDARY_ATTACKER_ORIGIN, timeout=4, pinned_ip=pinned_ip)
 
         if res_a.get("success") and res_b.get("success"):
             acao_a = res_a.get("acao")
@@ -586,7 +587,7 @@ def scan_cors(url):
                 "Access-Control-Request-Headers": "Authorization, Content-Type",
                 "User-Agent": "Mozilla/5.0 (Website-Security-Scanner CORS-Check)"
             }
-            opt_resp = requests.options(primary_endpoint, headers=pf_headers, timeout=5)
+            opt_resp = safe_request("OPTIONS", primary_endpoint, pinned_ip=pinned_ip, headers=pf_headers, timeout=5)
             pf_acao = opt_resp.headers.get("Access-Control-Allow-Origin")
             pf_acam = opt_resp.headers.get("Access-Control-Allow-Methods") or ""
             pf_acah = opt_resp.headers.get("Access-Control-Allow-Headers") or ""
@@ -631,7 +632,7 @@ def scan_cors(url):
         tests_performed.append("API Subpath Endpoint Coverage Check")
         if len(endpoints_to_test) > 1:
             for sub_ep in endpoints_to_test[1:]:
-                res_sub = _request_with_origin(sub_ep, DEFAULT_ATTACKER_ORIGIN, timeout=3)
+                res_sub = _request_with_origin(sub_ep, DEFAULT_ATTACKER_ORIGIN, timeout=3, pinned_ip=pinned_ip)
                 if res_sub.get("success") and res_sub.get("status_code") != 404:
                     sub_acao = res_sub.get("acao")
                     sub_acac = (res_sub.get("acac") or "").lower() == "true"

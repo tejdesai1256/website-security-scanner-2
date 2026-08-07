@@ -3,7 +3,7 @@ import dns.resolver
 from urllib.parse import urlparse
 
 
-def scan_dns(url):
+def scan_dns(url, pinned_ip=None):
 
     try:
 

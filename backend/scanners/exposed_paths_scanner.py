@@ -1,6 +1,7 @@
 import requests
 import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from services.url_validator import safe_get
 
 # Common sensitive paths that should never be publicly reachable.
 # Format: path -> (description, severity if exposed, category)
@@ -86,7 +87,7 @@ REQUEST_TIMEOUT = 5
 MAX_BODY_BYTES = 8192
 
 
-def _get_baseline(base_url):
+def _get_baseline(base_url, pinned_ip=None):
     """
     Request a deliberately random, nonexistent path. Some sites (SPAs, custom routers)
     return HTTP 200 for every path instead of a real 404. If that's the case here, we use
@@ -94,8 +95,9 @@ def _get_baseline(base_url):
     """
     random_path = f"/this-path-should-not-exist-{uuid.uuid4().hex[:12]}"
     try:
-        response = requests.get(
+        response = safe_get(
             base_url.rstrip("/") + random_path,
+            pinned_ip=pinned_ip,
             timeout=REQUEST_TIMEOUT,
             allow_redirects=False,
             stream=True,
@@ -132,7 +134,7 @@ def _get_baseline(base_url):
         return {"status_code": None, "content_length": None, "always_returns_200": False}
 
 
-def _check_path(base_url, path, description, severity, category, baseline):
+def _check_path(base_url, path, description, severity, category, baseline, pinned_ip=None):
     """Check a single path and classify it as exposed, protected, or not found.
 
     Applies content-signature verification when a SIGNATURES entry exists for
@@ -140,8 +142,9 @@ def _check_path(base_url, path, description, severity, category, baseline):
     """
     full_url = base_url.rstrip("/") + path
     try:
-        response = requests.get(
+        response = safe_get(
             full_url,
+            pinned_ip=pinned_ip,
             timeout=REQUEST_TIMEOUT,
             allow_redirects=False,
             stream=True,
@@ -258,7 +261,7 @@ def _check_path(base_url, path, description, severity, category, baseline):
                 "content_length": None, "content_truncated": False, "error": str(e)}
 
 
-def scan_exposed_paths(url):
+def scan_exposed_paths(url, pinned_ip=None):
     try:
         if not url.startswith(("http://", "https://")):
             url = "https://" + url
@@ -266,12 +269,12 @@ def scan_exposed_paths(url):
         base_url = url.rstrip("/")
 
         # Establish baseline behavior first (single request) before firing concurrent checks
-        baseline = _get_baseline(base_url)
+        baseline = _get_baseline(base_url, pinned_ip=pinned_ip)
 
         results = []
         with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             futures = {
-                executor.submit(_check_path, base_url, path, desc, sev, cat, baseline): path
+                executor.submit(_check_path, base_url, path, desc, sev, cat, baseline, pinned_ip): path
                 for path, (desc, sev, cat) in SENSITIVE_PATHS.items()
             }
             for future in as_completed(futures):

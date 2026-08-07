@@ -141,7 +141,7 @@ def get_socket_whois_info(domain):
     except Exception:
         return {"success": False}
 
-def scan_info(url):
+def scan_info(url, pinned_ip=None):
     try:
         if not url.startswith(("http://", "https://")):
             url = "https://" + url
@@ -151,10 +151,13 @@ def scan_info(url):
             return {"success": False, "error": "Invalid URL"}
             
         # Get IP address
-        try:
-            ip = socket.gethostbyname(hostname)
-        except Exception:
-            ip = "Unknown"
+        if pinned_ip:
+            ip = pinned_ip
+        else:
+            try:
+                ip = socket.gethostbyname(hostname)
+            except Exception:
+                ip = "Unknown"
             
         # Geolocation
         country = "Unknown"

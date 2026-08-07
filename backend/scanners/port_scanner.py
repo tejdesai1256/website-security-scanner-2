@@ -45,7 +45,7 @@ RISK_NOTES = {
 }
 
 
-def scan_ports(url):
+def scan_ports(url, pinned_ip=None):
 
     try:
 
@@ -68,9 +68,12 @@ def scan_ports(url):
         # RESOLVE IP
         # =========================
 
-        ip_address = socket.gethostbyname(
-            hostname
-        )
+        if pinned_ip:
+            ip_address = pinned_ip
+        else:
+            ip_address = socket.gethostbyname(
+                hostname
+            )
 
         open_ports = []
 
