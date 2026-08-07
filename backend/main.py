@@ -15,6 +15,7 @@ from scanners.performance_scanner import scan_performance
 from scanners.cors_scanner import scan_cors
 from scanners.exposed_paths_scanner import scan_exposed_paths
 from services.ai_service import get_ai_response
+from services.url_validator import validate_public_url
 
 import os
 
@@ -161,6 +162,26 @@ def scan_website(data: ScanRequest):
         target_url = data.url.strip().replace(" ", "")
         if not target_url.startswith("http://") and not target_url.startswith("https://"):
             target_url = "https://" + target_url
+
+        print(f"Initiating scan for target: {target_url}")
+
+        # Validate target host before running any scanners to prevent SSRF
+        is_valid, resolved_ip, reason = validate_public_url(target_url)
+        if not is_valid:
+            print(f"SSRF validation blocked target {target_url}: {reason}. Skipping all scanners.")
+            return {
+                "success": False,
+                "website": data.url,
+                "error": reason,
+                "summary": {
+                    "security_score": 0,
+                    "risk_level": "UNKNOWN",
+                    "recommendations": ["Scan failed to complete because the target host is not a public IP address."],
+                    "human_summary": f"An error occurred while scanning {data.url}: {reason}"
+                },
+                "website_info": {},
+                "scans": {}
+            }
 
         headers_result = scan_headers(target_url)
         ssl_result = scan_ssl(target_url)
